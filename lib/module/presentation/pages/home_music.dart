@@ -149,7 +149,7 @@ class HomeMusic extends StatelessWidget {
                                             16,
                                           ),
                                           image: DecorationImage(
-                                            image: NetworkImage(song.imageUrl),
+                                            image: AssetImage(song.imageUrl),
                                             fit: BoxFit.cover,
                                           ),
                                           boxShadow: [
@@ -236,7 +236,7 @@ class HomeMusic extends StatelessWidget {
                                       decoration: BoxDecoration(
                                         borderRadius: BorderRadius.circular(16),
                                         image: DecorationImage(
-                                          image: NetworkImage(song.imageUrl),
+                                          image: AssetImage(song.imageUrl),
                                           fit: BoxFit.cover,
                                         ),
                                         boxShadow: [
