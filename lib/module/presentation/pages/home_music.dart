@@ -3,6 +3,8 @@ import 'package:carousel_slider/carousel_slider.dart';
 import 'package:flutter_application_1/module/presentation/cubit/music_cubit.dart';
 import 'package:flutter_application_1/module/presentation/cubit/music_state.dart';
 import 'package:flutter_application_1/module/presentation/cubit/theme_cubit.dart';
+import 'package:flutter_application_1/module/presentation/pages/detail_music.dart';
+import 'package:flutter_application_1/module/presentation/pages/list_favorite_song.dart';
 import 'package:flutter_application_1/module/presentation/widget/mini_player.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -22,14 +24,11 @@ class HomeMusic extends StatelessWidget {
       drawer: Drawer(
         backgroundColor: bgColor,
         child: SafeArea(
-          child: Column(
-            children: [
-              Padding(
-                padding: EdgeInsetsGeometry.symmetric(
-                  horizontal: 16,
-                  vertical: 16,
-                ),
-                child: Row(
+          child: Padding(
+            padding: EdgeInsets.all(20),
+            child: Column(
+              children: [
+                Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     IconButton(
@@ -50,11 +49,70 @@ class HomeMusic extends StatelessWidget {
                     ),
                   ],
                 ),
-              ),
-              SizedBox(height: 20),
-
-              // Các item Trong Cài Đặt
-            ],
+                SizedBox(height: 30),
+                // Các item Trong Cài Đặt
+                InkWell(
+                  onTap: () {},
+                  child: Container(
+                    child: Row(
+                      children: [
+                        Column(
+                          children: [
+                            Icon(Icons.person, color: iconColor, size: 30),
+                          ],
+                        ),
+                        SizedBox(width: 30),
+                        Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              "Profile",
+                              style: TextStyle(color: textColor, fontSize: 20),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                SizedBox(height: 30),
+                InkWell(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ListFavoriteSong(),
+                      ),
+                    );
+                  },
+                  child: Container(
+                    child: Row(
+                      children: [
+                        Column(
+                          children: [
+                            Icon(
+                              Icons.favorite_border_outlined,
+                              color: iconColor,
+                              size: 30,
+                            ),
+                          ],
+                        ),
+                        SizedBox(width: 30),
+                        Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              "Liked Songs",
+                              style: TextStyle(color: textColor, fontSize: 20),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -130,17 +188,23 @@ class HomeMusic extends StatelessWidget {
                               return GestureDetector(
                                 onTap: () {
                                   context.read<MusicCubit>().playMusic(song);
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => DetailMusic(
+                                        playlist: state.recommendedSongs,
+                                        initialIndex: index,
+                                      ),
+                                    ),
+                                  );
                                 },
                                 child: Container(
                                   width: 150,
-                                  margin: const EdgeInsets.only(
-                                    right: 15,
-                                  ), // Giữ margin phải
+                                  margin: const EdgeInsets.only(right: 15),
                                   child: Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.center,
                                     children: [
-                                      // Ảnh bài hát
                                       Container(
                                         height: 160,
                                         width: 160,

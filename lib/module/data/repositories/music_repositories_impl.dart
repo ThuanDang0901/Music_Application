@@ -7,8 +7,8 @@ class MusicRepositoriesImpl implements IMusicRepository {
     await Future.delayed(const Duration(seconds: 1));
     return [
       Song(
-        title: 'Monsters Go Bump',
-        artist: 'ERIKA RECINOS',
+        title: 'DATLE',
+        artist: 'B-Wine',
         imageUrl: 'assets/img/1.jpg',
         audioUrl: 'audio/b-wine.mp3',
       ),
@@ -16,7 +16,7 @@ class MusicRepositoriesImpl implements IMusicRepository {
         title: 'Moment Apart',
         artist: 'ODESZA',
         imageUrl: 'assets/img/2.jpg',
-        audioUrl: 'audio/Đen.mp3',
+        audioUrl: 'audio/Drt.mp3',
       ),
       Song(
         title: 'Something Wild',
@@ -41,7 +41,7 @@ class MusicRepositoriesImpl implements IMusicRepository {
         title: 'Believer',
         artist: 'IMAGINE DRAGONS',
         imageUrl: 'assets/img/5.jpg',
-        audioUrl: 'audio/Drt.mp3',
+        audioUrl: '',
       ),
       Song(
         title: 'Shortwave',

@@ -14,6 +14,8 @@ class MusicLoaded extends MusicState {
   final bool isPlaying;
   final Duration currentPosition;
   final Duration totalDuration;
+  final bool isRepeat;
+  final List<Song> favoriteSongs;
 
   MusicLoaded({
     required this.recommendedSongs,
@@ -22,6 +24,8 @@ class MusicLoaded extends MusicState {
     this.isPlaying = false,
     this.currentPosition = Duration.zero,
     this.totalDuration = Duration.zero,
+    this.isRepeat = false,
+    this.favoriteSongs = const [],
   });
   MusicLoaded copyWith({
     List<Song>? recommendedSongs,
@@ -30,6 +34,8 @@ class MusicLoaded extends MusicState {
     bool? isPlaying,
     Duration? currentPosition,
     Duration? totalDuration,
+    bool? isRepeat,
+    List<Song>? favoriteSongs,
   }) {
     return MusicLoaded(
       recommendedSongs: recommendedSongs ?? this.recommendedSongs,
@@ -38,6 +44,8 @@ class MusicLoaded extends MusicState {
       isPlaying: isPlaying ?? this.isPlaying,
       currentPosition: currentPosition ?? this.currentPosition,
       totalDuration: totalDuration ?? this.totalDuration,
+      isRepeat: isRepeat ?? this.isRepeat,
+      favoriteSongs: favoriteSongs ?? this.favoriteSongs,
     );
   }
 }

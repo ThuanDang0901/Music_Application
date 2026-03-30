@@ -1,4 +1,5 @@
 import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_application_1/module/domain/entities/song.dart';
 import 'package:flutter_application_1/module/domain/usecases/usecase_get_music.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -19,14 +20,16 @@ class MusicCubit extends Cubit<MusicState> {
         emit((state as MusicLoaded).copyWith(totalDuration: dur));
       }
     });
-    _audioPlayer.onPlayerComplete.listen((event) {
+    _audioPlayer.onPlayerComplete.listen((event) async {
       if (state is MusicLoaded) {
-        emit(
-          (state as MusicLoaded).copyWith(
-            isPlaying: false,
-            currentPosition: Duration.zero,
-          ),
-        );
+        final currentState = state as MusicLoaded;
+        if (currentState.isRepeat) {
+          if (currentState.currentSong != null) {
+            await playMusic(currentState.currentSong!);
+          }
+        } else {
+          playNext();
+        }
       }
     });
   }
@@ -65,6 +68,88 @@ class MusicCubit extends Cubit<MusicState> {
 
   Future<void> seek(Duration position) async {
     await _audioPlayer.seek(position);
+  }
+
+  Future<void> playNext() async {
+    if (state is MusicLoaded) {
+      final currentState = state as MusicLoaded;
+      if (currentState.currentSong == null) return;
+
+      final currentUrl = currentState.currentSong!.audioUrl;
+      List<Song> activePlaylist = currentState.playlistSongs;
+      int currentIndex = activePlaylist.indexWhere(
+        (song) => song.audioUrl == currentUrl,
+      );
+
+      if (currentIndex == -1) {
+        activePlaylist = currentState.recommendedSongs;
+        currentIndex = activePlaylist.indexWhere(
+          (song) => song.audioUrl == currentUrl,
+        );
+      }
+      if (currentIndex != -1 && activePlaylist.isNotEmpty) {
+        int nextIndex = currentIndex + 1;
+        if (nextIndex >= activePlaylist.length) {
+          nextIndex = 0; // Quay lại bài đầu
+        }
+        await playMusic(activePlaylist[nextIndex]);
+      }
+    }
+  }
+
+  Future<void> playPrevious() async {
+    if (state is MusicLoaded) {
+      final currentState = state as MusicLoaded;
+      if (currentState.currentSong == null) return;
+
+      final currentUrl = currentState.currentSong!.audioUrl;
+
+      List<Song> activePlaylist = currentState.playlistSongs;
+      int currentIndex = activePlaylist.indexWhere(
+        (song) => song.audioUrl == currentUrl,
+      );
+
+      if (currentIndex == -1) {
+        activePlaylist = currentState.recommendedSongs;
+        currentIndex = activePlaylist.indexWhere(
+          (song) => song.audioUrl == currentUrl,
+        );
+      }
+
+      if (currentIndex != -1 && activePlaylist.isNotEmpty) {
+        if (currentState.isPlaying &&
+            currentState.currentPosition.inSeconds > 3) {
+          await seek(Duration.zero);
+          return;
+        }
+
+        int prevIndex = currentIndex - 1;
+        if (prevIndex < 0) {
+          prevIndex = activePlaylist.length - 1;
+        }
+        await playMusic(activePlaylist[prevIndex]);
+      }
+    }
+  }
+
+  void ControlRepeat() {
+    if (state is MusicLoaded) {
+      final currentState = state as MusicLoaded;
+      emit(currentState.copyWith(isRepeat: !currentState.isRepeat));
+    }
+  }
+
+  void ControlFavoriteSong(Song song) {
+    if (state is MusicLoaded) {
+      final currentState = state as MusicLoaded;
+      final List<Song> updatedFavorites = List.from(currentState.favoriteSongs);
+      if (updatedFavorites.contains(song)) {
+        updatedFavorites.remove(song);
+      } else {
+        updatedFavorites.add(song);
+      }
+      emit(currentState.copyWith(favoriteSongs: updatedFavorites));
+    }
   }
 
   @override

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_application_1/module/presentation/cubit/music_cubit.dart';
 import 'package:flutter_application_1/module/presentation/cubit/music_state.dart';
 import 'package:flutter_application_1/module/presentation/cubit/theme_cubit.dart';
+import 'package:flutter_application_1/module/presentation/pages/detail_music.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class MiniPlayer extends StatelessWidget {
@@ -10,7 +11,6 @@ class MiniPlayer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = context.watch<ThemeCubit>().state;
-
     final bgColor = isDark ? const Color(0xFF131E3A) : Colors.white;
     final textColor = isDark ? Colors.white : Colors.black87;
     final subTextColor = isDark ? Colors.white54 : Colors.black54;
@@ -19,6 +19,7 @@ class MiniPlayer extends StatelessWidget {
     final sliderInactiveColor = isDark
         ? Colors.white.withValues(alpha: 0.2)
         : Colors.grey[300];
+
     return BlocBuilder<MusicCubit, MusicState>(
       builder: (context, state) {
         if (state is! MusicLoaded || state.currentSong == null) {
@@ -32,99 +33,124 @@ class MiniPlayer extends StatelessWidget {
           0.0,
           maxDuration,
         );
-        return Container(
-          color: bgColor,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Transform.translate(
-                offset: const Offset(0, -10),
-                child: SliderTheme(
-                  data: SliderTheme.of(context).copyWith(
-                    trackHeight: 2.0,
-                    thumbShape: const RoundSliderThumbShape(
-                      enabledThumbRadius: 10.0,
-                    ),
-                    overlayShape: const RoundSliderOverlayShape(
-                      overlayRadius: 12.0,
-                    ),
-                    activeTrackColor: sliderActiveColor,
-                    inactiveTrackColor: sliderInactiveColor,
-                    thumbColor: sliderActiveColor,
-                  ),
-                  child: Slider(
-                    min: 0.0,
-                    max: maxDuration,
-                    value: currentPos,
-                    onChanged: (value) {
-                      context.read<MusicCubit>().seek(
-                        Duration(seconds: value.toInt()),
-                      );
-                    },
-                  ),
+        return InkWell(
+          onTap: () {
+            final currentIndex = state.playlistSongs.indexOf(
+              state.currentSong!,
+            );
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => DetailMusic(
+                  playlist: state.recommendedSongs,
+                  initialIndex: currentIndex != 1 ? currentIndex : 0,
                 ),
               ),
-              Transform.translate(
-                offset: const Offset(0, -10),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16.0,
-                    vertical: 4.0,
-                  ),
-                  child: Row(
-                    children: [
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(8.0),
-                        child: Image.asset(song.imageUrl, scale: 15),
+            );
+          },
+          child: Container(
+            color: bgColor,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Transform.translate(
+                  offset: const Offset(0, -10),
+                  child: SliderTheme(
+                    data: SliderTheme.of(context).copyWith(
+                      trackHeight: 2.0,
+                      thumbShape: const RoundSliderThumbShape(
+                        enabledThumbRadius: 10.0,
                       ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              song.title,
-                              style: TextStyle(
-                                color: textColor,
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
+                      overlayShape: const RoundSliderOverlayShape(
+                        overlayRadius: 12.0,
+                      ),
+                      activeTrackColor: sliderActiveColor,
+                      inactiveTrackColor: sliderInactiveColor,
+                      thumbColor: sliderActiveColor,
+                    ),
+                    child: Slider(
+                      min: 0.0,
+                      max: maxDuration,
+                      value: currentPos,
+                      onChanged: (value) {
+                        context.read<MusicCubit>().seek(
+                          Duration(seconds: value.toInt()),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+                Transform.translate(
+                  offset: const Offset(0, -10),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16.0,
+                      vertical: 4.0,
+                    ),
+                    child: Row(
+                      children: [
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(8.0),
+                          child: Image.asset(song.imageUrl, scale: 15),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                song.title,
+                                style: TextStyle(
+                                  color: textColor,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
+                              SizedBox(height: 2),
+                              Text(
+                                song.artist,
+                                style: TextStyle(
+                                  color: textColor,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Row(
+                          children: [
+                            IconButton(
+                              icon: Icon(Icons.skip_previous, color: iconColor),
+                              onPressed: () {
+                                context.read<MusicCubit>().playPrevious();
+                              },
                             ),
-                            SizedBox(height: 2),
-                            Text(
-                              song.artist,
-                              style: TextStyle(color: textColor, fontSize: 12),
+                            IconButton(
+                              icon: Icon(
+                                state.isPlaying
+                                    ? Icons.pause
+                                    : Icons.play_arrow,
+                                color: iconColor,
+                                size: 32,
+                              ),
+                              onPressed: () {
+                                context.read<MusicCubit>().PauseOrResume();
+                              },
+                            ),
+                            IconButton(
+                              icon: Icon(Icons.skip_next, color: iconColor),
+                              onPressed: () {
+                                context.read<MusicCubit>().playNext();
+                              },
                             ),
                           ],
                         ),
-                      ),
-                      Row(
-                        children: [
-                          IconButton(
-                            icon: Icon(Icons.skip_previous, color: iconColor),
-                            onPressed: () {},
-                          ),
-                          IconButton(
-                            icon: Icon(
-                              state.isPlaying ? Icons.pause : Icons.play_arrow,
-                              color: iconColor,
-                              size: 32,
-                            ),
-                            onPressed: () {
-                              context.read<MusicCubit>().PauseOrResume();
-                            },
-                          ),
-                          IconButton(
-                            icon: Icon(Icons.skip_next, color: iconColor),
-                            onPressed: () {},
-                          ),
-                        ],
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         );
       },
