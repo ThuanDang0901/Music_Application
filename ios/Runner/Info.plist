@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Flutter Application 1</string>
+	<string>Music App</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -13,7 +13,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>flutter_application_1</string>
+	<string>MusicApp</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -45,5 +45,36 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+
+	<!-- CFBundleURLTypes dành cho cả Google Sign-In và Facebook Login -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<!-- Scheme dành cho Google Sign-In -->
+				<string>com.googleusercontent.apps.918063011490-2r71iooslcn18v1mle12rpn07rf8cpir</string>
+				<!-- Scheme dành cho Facebook Login (Thêm chữ 'fb' + Facebook App ID) -->
+				<string>fb1058757830434791</string>
+			</array>
+		</dict>
+	</array>
+
+	<!-- Cấu hình Facebook SDK -->
+	<key>FacebookAppID</key>
+	<string>1058757830434791</string>
+	<key>FacebookClientToken</key>
+	<string>09e7b2674717761513e2f9a9a50e2572</string>
+	<key>FacebookDisplayName</key>
+	<string>Music Application</string>
+
+	<!-- Cho phép ứng dụng mở ứng dụng Facebook -->
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>fbapi</string>
+		<string>fb-messenger-share-api</string>
+	</array>
 </dict>
 </plist>
