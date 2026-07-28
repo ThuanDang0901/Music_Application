@@ -1,31 +1,115 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:flutter_application_1/module/data/services/auth_service.dart';
 import 'package:flutter_application_1/module/presentation/cubit/music_cubit.dart';
 import 'package:flutter_application_1/module/presentation/cubit/music_state.dart';
 import 'package:flutter_application_1/module/presentation/cubit/theme_cubit.dart';
 import 'package:flutter_application_1/module/presentation/pages/detail_music.dart';
 import 'package:flutter_application_1/module/presentation/pages/list_favorite_song.dart';
+import 'package:flutter_application_1/module/presentation/pages/login_page.dart';
 import 'package:flutter_application_1/module/presentation/widget/mini_player.dart';
+import 'package:flutter_application_1/module/presentation/widget/toast_helper.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class HomeMusic extends StatelessWidget {
   const HomeMusic({super.key});
 
+  Future<void> _handleLogout(BuildContext context) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) {
+        final isDark = context.read<ThemeCubit>().state;
+        final bg = isDark ? const Color(0xFF1A1A2E) : Colors.white;
+        final text = isDark ? Colors.white : Colors.black87;
+        return AlertDialog(
+          backgroundColor: bg,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+          ),
+          title: Text(
+            'Đăng xuất',
+            style: TextStyle(color: text, fontWeight: FontWeight.w700),
+          ),
+          content: Text(
+            'Bạn có chắc muốn đăng xuất khỏi tài khoản không?',
+            style: TextStyle(color: text.withValues(alpha: 0.75), fontSize: 14),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: Text(
+                'Hủy',
+                style: TextStyle(
+                  color: text.withValues(alpha: 0.6),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF6C5CE7),
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text('Đăng xuất'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirm == true) {
+      try {
+        await AuthService().signOut();
+        if (context.mounted) {
+          ToastHelper.showSuccess(
+            context: context,
+            message: 'Đã đăng xuất thành công.',
+          );
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (_) => const LoginPage()),
+            (route) => false,
+          );
+        }
+      } catch (_) {
+        if (context.mounted) {
+          ToastHelper.showError(
+            context: context,
+            message: 'Đăng xuất thất bại. Vui lòng thử lại.',
+          );
+        }
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = context.watch<ThemeCubit>().state;
 
-    final bgColor = isDark ? Color(0xFF0091227) : Color(0xFFEAF0FF);
+    final bgColor = isDark ? const Color(0xFF091227) : const Color(0xFFEAF0FF);
     final textColor = isDark ? Colors.white : Colors.black;
-    final subTextColor = isDark ? Colors.white10 : Colors.black38;
+    final subTextColor = isDark ? Colors.white60 : Colors.black45;
     final iconColor = isDark ? Colors.white : Colors.black87;
+    final accentColor = const Color(0xFF6C5CE7);
+
+    final user = FirebaseAuth.instance.currentUser;
+    final displayName =
+        user?.displayName ?? user?.email ?? user?.phoneNumber ?? 'Người dùng';
+    final userEmail = user?.email ?? user?.phoneNumber ?? '';
+    final photoUrl = user?.photoURL;
 
     return Scaffold(
       drawer: Drawer(
         backgroundColor: bgColor,
         child: SafeArea(
           child: Padding(
-            padding: EdgeInsets.all(20),
+            padding: const EdgeInsets.all(20),
             child: Column(
               children: [
                 Row(
@@ -42,70 +126,154 @@ class HomeMusic extends StatelessWidget {
                         context.read<ThemeCubit>().toggleTheme();
                       },
                       icon: Icon(
-                        Icons.nightlight_round,
+                        isDark
+                            ? Icons.wb_sunny_outlined
+                            : Icons.nightlight_round,
                         size: 28,
                         color: iconColor,
                       ),
                     ),
                   ],
                 ),
-                SizedBox(height: 30),
-                // Các item Trong Cài Đặt
-                InkWell(
-                  onTap: () {},
-                  child: Container(
-                    child: Row(
-                      children: [
-                        Column(
-                          children: [
-                            Icon(Icons.person, color: iconColor, size: 30),
-                          ],
+                const SizedBox(height: 20),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? accentColor.withValues(alpha: 0.1)
+                        : accentColor.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(
+                      color: accentColor.withValues(alpha: 0.25),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 56,
+                        height: 56,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: accentColor.withValues(alpha: 0.2),
+                          image: photoUrl != null && photoUrl.isNotEmpty
+                              ? DecorationImage(
+                                  image: NetworkImage(photoUrl),
+                                  fit: BoxFit.cover,
+                                )
+                              : null,
                         ),
-                        SizedBox(width: 30),
-                        Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
+                        child: photoUrl == null || photoUrl.isEmpty
+                            ? Icon(
+                                Icons.person_rounded,
+                                color: accentColor,
+                                size: 30,
+                              )
+                            : null,
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              "Profile",
-                              style: TextStyle(color: textColor, fontSize: 20),
+                              displayName,
+                              style: TextStyle(
+                                color: textColor,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
+                            const SizedBox(height: 4),
+                            if (userEmail.isNotEmpty)
+                              Text(
+                                userEmail,
+                                style: TextStyle(
+                                  color: subTextColor,
+                                  fontSize: 13,
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
                           ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 30),
+                InkWell(
+                  onTap: () {
+                    ToastHelper.showInfo(
+                      context: context,
+                      message: 'Trang Profile đang được phát triển.',
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(14),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 14, horizontal: 6),
+                    child: Row(
+                      children: [
+                        Icon(Icons.person_outline,
+                            color: iconColor, size: 28),
+                        const SizedBox(width: 16),
+                        Text(
+                          'Hồ sơ cá nhân',
+                          style: TextStyle(color: textColor, fontSize: 17),
                         ),
                       ],
                     ),
                   ),
                 ),
-                SizedBox(height: 30),
+                const SizedBox(height: 6),
                 InkWell(
                   onTap: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => ListFavoriteSong(),
+                        builder: (context) => const ListFavoriteSong(),
                       ),
                     );
                   },
-                  child: Container(
+                  borderRadius: BorderRadius.circular(14),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 14, horizontal: 6),
                     child: Row(
                       children: [
-                        Column(
-                          children: [
-                            Icon(
-                              Icons.favorite_border_outlined,
-                              color: iconColor,
-                              size: 30,
-                            ),
-                          ],
+                        Icon(Icons.favorite_border_outlined,
+                            color: iconColor, size: 28),
+                        const SizedBox(width: 16),
+                        Text(
+                          'Bài hát đã thích',
+                          style: TextStyle(color: textColor, fontSize: 17),
                         ),
-                        SizedBox(width: 30),
-                        Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              "Liked Songs",
-                              style: TextStyle(color: textColor, fontSize: 20),
-                            ),
-                          ],
+                      ],
+                    ),
+                  ),
+                ),
+                const Spacer(),
+                const Divider(),
+                const SizedBox(height: 10),
+                InkWell(
+                  onTap: () => _handleLogout(context),
+                  borderRadius: BorderRadius.circular(14),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 14, horizontal: 6),
+                    child: Row(
+                      children: const [
+                        Icon(Icons.logout_rounded,
+                            color: Color(0xFFE74C3C), size: 28),
+                        SizedBox(width: 16),
+                        Text(
+                          'Đăng xuất',
+                          style: TextStyle(
+                              color: Color(0xFFE74C3C),
+                              fontSize: 17,
+                              fontWeight: FontWeight.w600),
                         ),
                       ],
                     ),
