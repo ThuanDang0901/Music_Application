@@ -8,13 +8,17 @@ import 'package:flutter_application_1/module/domain/usecases/usecase_get_music.d
 import 'package:flutter_application_1/module/presentation/cubit/music_cubit.dart';
 import 'package:flutter_application_1/module/presentation/cubit/theme_cubit.dart';
 import 'package:flutter_application_1/module/presentation/pages/login_page.dart';
+import 'package:flutter_application_1/module/data/services/jamendo_api_service.dart';
 
 void main() {
+  final apiservice = JamendoApiService();
+
+
   testWidgets('App loads and shows LoginPage when not authenticated',
       (WidgetTester tester) async {
     TestWidgetsFlutterBinding.ensureInitialized();
 
-    final repository = MusicRepositoriesImpl();
+    final repository = MusicRepositoriesImpl(apiService: apiservice);
     final getMusicUseCase = GetMusicUseCase(repository);
 
     await tester.pumpWidget(

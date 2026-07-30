@@ -37,22 +37,30 @@ class MusicCubit extends Cubit<MusicState> {
   Future<void> loadMusicData() async {
     emit(MusicLoading());
     try {
-      final recommended = await getMusicUseCase.executeRecommended();
+      final recommended = await getMusicUseCase.executeRecommendeds();
       final playlist = await getMusicUseCase.executePlaylist();
 
       emit(MusicLoaded(recommendedSongs: recommended, playlistSongs: playlist));
     } catch (e) {
+      debugPrint('=== CHI TIẾT LỖI TẢI NHẠC: $e ===');
       emit(MusicError('Lỗi tải dữ liệu: $e'));
     }
   }
 
-  Future<void> playMusic(Song song) async {
+ Future<void> playMusic(Song song) async {
     if (state is MusicLoaded) {
-      await _audioPlayer.play(AssetSource(song.audioUrl));
+      
+      // Kiểm tra xem audioUrl có phải là link mạng (bắt đầu bằng http/https) hay không.
+      // Nếu có -> Phát qua UrlSource (nhạc Jamendo)
+      // Nếu không (HOẶC) -> Phát qua AssetSource (nhạc mock data)
+      final source = song.audioUrl.startsWith('http') 
+          ? UrlSource(song.audioUrl) 
+          : AssetSource(song.audioUrl);
+
+      await _audioPlayer.play(source);
       emit((state as MusicLoaded).copyWith(currentSong: song, isPlaying: true));
     }
   }
-
   Future<void> PauseOrResume() async {
     if (state is MusicLoaded) {
       final currentState = state as MusicLoaded;
