@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Music App</string>
+    <string name="facebook_app_id">1058757830434791</string>
+    <string name="facebook_client_token">09e7b2674717761513e2f9a9a50e2572</string>
+    <string name="fb_login_protocol_scheme">fb1058757830434791</string>
+</resources>

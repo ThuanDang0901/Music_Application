@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "918063011490",
+    "firebase_url": "https://music-application-24b29-default-rtdb.firebaseio.com",
+    "project_id": "music-application-24b29",
+    "storage_bucket": "music-application-24b29.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:918063011490:android:3ca03aa9fd9a108280a9fb",
+        "android_client_info": {
+          "package_name": "com.company.musicapplication"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "918063011490-android-client-id.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.company.musicapplication",
+            "certificate_hash": "78:06:84:AF:72:1B:FB:47:24:36:D4:CE:CF:6F:7C:0C:50:F5:89:24"
+          }
+        },
+        {
+          "client_id": "918063011490-web-client-id.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDr49lT8L503gSxKZ8cU9ucmthRyDcOR98"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "918063011490-web-client-id.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

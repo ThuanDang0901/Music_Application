@@ -1,7 +1,7 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-<head>
-  <!--
+  <head>
+    <!--
     If you are serving your web app in a path other than the root, change the
     href value below to reflect the base path you are serving from.
 
@@ -14,25 +14,133 @@
     This is a placeholder for base href that will be replaced by the value of
     the `--base-href` argument provided to `flutter build`.
   -->
-  <base href="$FLUTTER_BASE_HREF">
+    <base href="$FLUTTER_BASE_HREF" />
 
-  <meta charset="UTF-8">
-  <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="A new Flutter project.">
+    <meta charset="UTF-8" />
+    <meta content="IE=Edge" http-equiv="X-UA-Compatible" />
+    <meta name="description" content="Music App - Nghe nhạc trực tuyến" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
 
-  <!-- iOS meta tags & icons -->
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="flutter_application_1">
-  <link rel="apple-touch-icon" href="icons/Icon-192.png">
+    <!-- iOS meta tags & icons -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+    <meta name="apple-mobile-web-app-title" content="Music App" />
+    <link rel="apple-touch-icon" href="icons/Icon-192.png" />
 
-  <!-- Favicon -->
-  <link rel="icon" type="image/png" href="favicon.png"/>
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="favicon.png" />
 
-  <title>flutter_application_1</title>
-  <link rel="manifest" href="manifest.json">
-</head>
-<body>
-  <script src="flutter_bootstrap.js" async></script>
-</body>
+    <title>Music App - Đăng nhập</title>
+    <link rel="manifest" href="manifest.json" />
+
+    <!-- ========================================= -->
+    <!-- FIREBASE JS SDK (REQUIRED for Flutter Web Auth) -->
+    <!-- Lấy từ: https://firebase.google.com/docs/web/setup -->
+    <!-- ========================================= -->
+    <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.0.1/firebase-auth-compat.js"></script>
+
+    <!-- ========================================= -->
+    <!-- GOOGLE IDENTITY SERVICES (GIS) - Required for Google Sign In on Web -->
+    <!-- 🔴 QUAN TRỌNG: KHÔNG DÙNG meta google-signin-client_id (gây double init vs google_sign_in_web.dart).
+       Client ID được set tự động qua 2 cách:
+         A. Tốt nhất: `flutterfire configure` (hoặc cập nhật file lib/firebase_options.dart)
+         B. Manual: Firebase Console → Authentication → Sign-in method → Google → Web SDK configuration
+            → Copy "Web client ID" → Dán vào DefaultFirebaseOptions trong firebase_options.dart (field apiKey? không,
+            google_sign_in_web đọc từ DefaultFirebaseOptions - cần cập nhật Google Sign In Web Client ID qua CLI).
+  -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+    <!-- ========================================= -->
+    <!-- FACEBOOK SDK - Required for Facebook Login on Web -->
+    <!--  Load SYNC (<script src>) to avoid race condition: flutter_facebook_auth needs window.FB before first render. -->
+    <!--  Thay YOUR_FACEBOOK_APP_ID bằng App ID thật trên developers.facebook.com -->
+    <!-- ========================================= -->
+    <div id="fb-root"></div>
+    <script
+      crossorigin="anonymous"
+      src="https://connect.facebook.net/vi_VN/sdk.js#xfbml=1&version=v20.0&appId=1058757830434791&autoLogAppEvents=1"
+      nonce=""
+    ></script>
+
+    <script>
+      // Safety backup init in case CDN script fails (for dev debugging)
+      window.addEventListener("load", function () {
+        if (typeof FB === "undefined") {
+          console.warn(
+            "[index.html] ⚠️ Facebook SDK (window.FB) still UNDEFINED after page load." +
+              " Reasons: 1) App ID placeholder wrong 2) Edge Tracking Prevention blocked 3rd party cookies 3) Network blocked facebook.net." +
+              " Fix: Turn OFF Edge Tracking Prevention (or Allow site) + use real App ID + ensure firewall allows connect.facebook.net",
+          );
+        } else {
+          console.log("[index.html] Facebook SDK (window.FB) ready ✅");
+        }
+      });
+    </script>
+
+    <!-- FIREBASE WEB INIT (placeholder - có thể override bằng code Dart qua DefaultFirebaseOptions) -->
+    <!-- Khi cấu hình thật, chạy flutterfire configure thì Flutterfire sẽ tự override phần này, vì vậy giữ placeholder là OK -->
+    <script>
+      var firebaseConfig = {
+        apiKey: "YOUR_API_KEY_HERE",
+        authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+        projectId: "YOUR_PROJECT_ID",
+        storageBucket: "YOUR_PROJECT_ID.appspot.com",
+        messagingSenderId: "YOUR_MESSAGING_SENDER_ID_HERE",
+        appId: "YOUR_APP_ID_HERE",
+        measurementId: "G-YOUR_MEASUREMENT_ID",
+      };
+      try {
+        if (
+          typeof firebase !== "undefined" &&
+          typeof firebase.initializeApp === "function"
+        ) {
+          firebase.initializeApp(firebaseConfig);
+          console.log(
+            "[index.html] Firebase SDK initialized (web compat layer).",
+          );
+        } else {
+          console.warn(
+            "[index.html] firebase compat SDK not yet loaded - relying on Dart-side FlutterFire init.",
+          );
+        }
+      } catch (err) {
+        console.warn("[index.html] Firebase init warning:", err);
+      }
+    </script>
+  </head>
+  <body>
+    <!-- Optional: Show "Đang tải..." trước khi Flutter render xong -->
+    <div
+      id="loading-text"
+      style="
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-family: Arial, sans-serif;
+        color: #6c5ce7;
+      "
+    >
+      <h3 style="margin: 0">🎵 Music App</h3>
+      <p style="color: #555">Đang tải...</p>
+    </div>
+    <script>
+      // Remove loading text when Flutter boots
+      window.addEventListener("flutter-first-frame", () => {
+        var el = document.getElementById("loading-text");
+        if (el) el.remove();
+      });
+      // Also remove after 10s fallback
+      setTimeout(() => {
+        var el = document.getElementById("loading-text");
+        if (el) el.remove();
+      }, 10000);
+    </script>
+
+    <script src="flutter_bootstrap.js" async></script>
+  </body>
 </html>
