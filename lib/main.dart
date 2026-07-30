@@ -1,17 +1,17 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/firebase_options.dart';
 import 'package:flutter_application_1/module/data/repositories/music_repositories_impl.dart';
 import 'package:flutter_application_1/module/domain/usecases/usecase_get_music.dart';
+import 'package:flutter_application_1/module/presentation/cubit/auth_cubit.dart';
+import 'package:flutter_application_1/module/presentation/cubit/auth_state.dart';
 import 'package:flutter_application_1/module/presentation/cubit/music_cubit.dart';
 import 'package:flutter_application_1/module/presentation/cubit/theme_cubit.dart';
 import 'package:flutter_application_1/module/presentation/pages/home_music.dart';
 import 'package:flutter_application_1/module/presentation/pages/login_page.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 import 'package:toastification/toastification.dart';
 
 void main() async {
@@ -40,6 +40,7 @@ void main() async {
                 MusicCubit(getMusicUseCase: getMusicUseCase)..loadMusicData(),
           ),
           BlocProvider(create: (context) => ThemeCubit()),
+          BlocProvider(create: (context) => AuthCubit()),
         ],
         child: const MyApp(),
       ),
@@ -127,10 +128,12 @@ class AuthGate extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<User?>(
-      stream: FirebaseAuth.instance.authStateChanges(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
+    return BlocBuilder<AuthCubit, AuthState>(
+      builder: (context, state) {
+        if (state is AuthAuthenticated) {
+          return const HomeMusic();
+        }
+        if (state is AuthLoading) {
           return const Scaffold(
             body: Center(
               child: SizedBox(
@@ -143,9 +146,6 @@ class AuthGate extends StatelessWidget {
               ),
             ),
           );
-        }
-        if (snapshot.hasData && snapshot.data != null) {
-          return const HomeMusic();
         }
         return const LoginPage();
       },
