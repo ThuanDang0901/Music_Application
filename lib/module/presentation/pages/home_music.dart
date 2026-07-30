@@ -147,6 +147,7 @@ class HomeMusic extends StatelessWidget {
                       color: accentColor.withValues(alpha: 0.25),
                     ),
                   ),
+                  
                   child: Row(
                     children: [
                       Container(
@@ -155,13 +156,16 @@ class HomeMusic extends StatelessWidget {
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           color: accentColor.withValues(alpha: 0.2),
+                          
                           image: photoUrl != null && photoUrl.isNotEmpty
                               ? DecorationImage(
                                   image: NetworkImage(photoUrl),
                                   fit: BoxFit.cover,
                                 )
                               : null,
+                              
                         ),
+                        
                         child: photoUrl == null || photoUrl.isEmpty
                             ? Icon(
                                 Icons.person_rounded,
@@ -169,6 +173,7 @@ class HomeMusic extends StatelessWidget {
                                 size: 30,
                               )
                             : null,
+                            
                       ),
                       const SizedBox(width: 14),
                       Expanded(
@@ -381,7 +386,8 @@ class HomeMusic extends StatelessWidget {
                                             16,
                                           ),
                                           image: DecorationImage(
-                                            image: AssetImage(song.imageUrl),
+                                            // image: AssetImage(song.imageUrl),
+                                            image: NetworkImage(song.imageUrl),
                                             fit: BoxFit.cover,
                                           ),
                                           boxShadow: [
@@ -468,7 +474,8 @@ class HomeMusic extends StatelessWidget {
                                       decoration: BoxDecoration(
                                         borderRadius: BorderRadius.circular(16),
                                         image: DecorationImage(
-                                          image: AssetImage(song.imageUrl),
+                                          // image: AssetImage(song.imageUrl),
+                                          image: NetworkImage(song.imageUrl),
                                           fit: BoxFit.cover,
                                         ),
                                         boxShadow: [
@@ -505,6 +512,7 @@ class HomeMusic extends StatelessWidget {
                                     ),
                                   ],
                                 ),
+                                
                               );
                             },
                             options: CarouselOptions(
