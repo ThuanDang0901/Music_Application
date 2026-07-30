@@ -81,17 +81,16 @@
       });
     </script>
 
-    <!-- FIREBASE WEB INIT (placeholder - có thể override bằng code Dart qua DefaultFirebaseOptions) -->
-    <!-- Khi cấu hình thật, chạy flutterfire configure thì Flutterfire sẽ tự override phần này, vì vậy giữ placeholder là OK -->
+    <!-- FIREBASE WEB INIT -->
     <script>
       var firebaseConfig = {
-        apiKey: "YOUR_API_KEY_HERE",
-        authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-        projectId: "YOUR_PROJECT_ID",
-        storageBucket: "YOUR_PROJECT_ID.appspot.com",
-        messagingSenderId: "YOUR_MESSAGING_SENDER_ID_HERE",
-        appId: "YOUR_APP_ID_HERE",
-        measurementId: "G-YOUR_MEASUREMENT_ID",
+        apiKey: "AIzaSyAXcG87_QTFSye3x_L57bNujWBhC2rw8jY",
+        authDomain: "music-application-24b29.firebaseapp.com",
+        projectId: "music-application-24b29",
+        storageBucket: "music-application-24b29.firebasestorage.app",
+        messagingSenderId: "918063011490",
+        appId: "1:918063011490:web:d2a10b1234567890abcdef",
+        databaseURL: "https://music-application-24b29-default-rtdb.firebaseio.com",
       };
       try {
         if (
@@ -100,11 +99,7 @@
         ) {
           firebase.initializeApp(firebaseConfig);
           console.log(
-            "[index.html] Firebase SDK initialized (web compat layer).",
-          );
-        } else {
-          console.warn(
-            "[index.html] firebase compat SDK not yet loaded - relying on Dart-side FlutterFire init.",
+            "[index.html] Firebase SDK initialized with project credentials.",
           );
         }
       } catch (err) {
