@@ -8,6 +8,7 @@ import 'package:flutter_application_1/module/presentation/cubit/theme_cubit.dart
 import 'package:flutter_application_1/module/presentation/pages/detail_music.dart';
 import 'package:flutter_application_1/module/presentation/pages/list_favorite_song.dart';
 import 'package:flutter_application_1/module/presentation/pages/login_page.dart';
+import 'package:flutter_application_1/module/presentation/pages/search_page.dart';
 import 'package:flutter_application_1/module/presentation/widget/mini_player.dart';
 import 'package:flutter_application_1/module/presentation/widget/toast_helper.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -329,7 +330,21 @@ class HomeMusic extends StatelessWidget {
                                     );
                                   },
                                 ),
-                                Icon(Icons.search, color: iconColor, size: 28),
+                                GestureDetector(
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => const SearchPage(),
+                                      ),
+                                    );
+                                  },
+                                  child: Icon(
+                                    Icons.search,
+                                    color: iconColor,
+                                    size: 28,
+                                  ),
+                                ),
                               ],
                             ),
                           ),

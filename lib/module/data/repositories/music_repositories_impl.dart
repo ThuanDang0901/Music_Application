@@ -63,4 +63,27 @@ class MusicRepositoriesImpl implements IMusicRepository {
       ),
     ];
   }
+
+  @override
+  Future<List<Song>> searchSongs(String query) async {
+    if (query.isEmpty) return [];
+    // We get all songs from the local repository mock lists
+    final recommended = await getRecommendedSongs();
+    final playlist = await getPlaylistSongs();
+    final allSongs = [...recommended, ...playlist];
+
+    final lowerQuery = query.toLowerCase();
+    // Filter matching songs by title or artist (case insensitive)
+    final results = allSongs.where((song) {
+      return song.title.toLowerCase().contains(lowerQuery) ||
+          song.artist.toLowerCase().contains(lowerQuery);
+    }).toList();
+
+    // Remove duplicates if any (by checking title and artist combination)
+    final seen = <String>{};
+    return results.where((song) {
+      final key = '${song.title.toLowerCase()}_${song.artist.toLowerCase()}';
+      return seen.add(key);
+    }).toList();
+  }
 }

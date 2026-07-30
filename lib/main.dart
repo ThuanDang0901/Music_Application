@@ -5,8 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_application_1/firebase_options.dart';
 import 'package:flutter_application_1/module/data/repositories/music_repositories_impl.dart';
 import 'package:flutter_application_1/module/domain/usecases/usecase_get_music.dart';
+import 'package:flutter_application_1/module/domain/usecases/search_songs_usecase.dart';
 import 'package:flutter_application_1/module/presentation/cubit/music_cubit.dart';
 import 'package:flutter_application_1/module/presentation/cubit/theme_cubit.dart';
+import 'package:flutter_application_1/module/presentation/cubit/search_cubit.dart';
 import 'package:flutter_application_1/module/presentation/pages/home_music.dart';
 import 'package:flutter_application_1/module/presentation/pages/login_page.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -38,6 +40,11 @@ void main() async {
           BlocProvider(
             create: (context) =>
                 MusicCubit(getMusicUseCase: getMusicUseCase)..loadMusicData(),
+          ),
+          BlocProvider(
+            create: (context) => SearchCubit(
+              searchSongsUseCase: SearchSongsUseCase(repository),
+            ),
           ),
           BlocProvider(create: (context) => ThemeCubit()),
         ],
