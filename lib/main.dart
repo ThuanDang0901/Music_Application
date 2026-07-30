@@ -13,7 +13,7 @@ import 'package:flutter_application_1/module/presentation/pages/login_page.dart'
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:toastification/toastification.dart';
-
+import 'package:flutter_application_1/module/data/services/jamendo_api_service.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -28,7 +28,7 @@ void main() async {
 
   await _initWebAuthProviders();
 
-  final repository = MusicRepositoriesImpl();
+  final repository = MusicRepositoriesImpl(apiService: JamendoApiService());
   final getMusicUseCase = GetMusicUseCase(repository);
 
   runApp(

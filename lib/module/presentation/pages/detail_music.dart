@@ -117,12 +117,19 @@ class _DetailMusicState extends State<DetailMusic> {
                           final song = widget.playlist[index];
                           return Column(
                             children: [
-                              Image.asset(
-                                song.imageUrl,
-                                fit: BoxFit.cover,
-                                height: 300,
-                                width: 300,
-                              ),
+                              // Image.asset(
+                              //   song.imageUrl,
+                              //   fit: BoxFit.cover,
+                              //   height: 300,
+                              //   width: 300,
+                              // ),
+                              Image.network(
+                              song.imageUrl,
+                              fit: BoxFit.cover,
+                              height: 300,
+                              width: 300,
+                              errorBuilder: (context, error, stackTrace) => const Icon(Icons.album, size: 100, color: Colors.grey),
+                            ),
                               SizedBox(height: 28),
                               SizedBox(
                                 width: 300,

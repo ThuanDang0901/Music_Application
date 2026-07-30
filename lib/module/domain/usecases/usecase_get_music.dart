@@ -7,6 +7,6 @@ class GetMusicUseCase
 
   GetMusicUseCase(this.repository);
 
-  Future<List<Song>> executeRecommended() => repository.getRecommendedSongs();
+  Future<List<Song>> executeRecommendeds() => repository.getRecommendedSongs();
   Future<List<Song>> executePlaylist() => repository.getPlaylistSongs();
 }

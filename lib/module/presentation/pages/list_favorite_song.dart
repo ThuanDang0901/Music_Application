@@ -56,12 +56,22 @@ class ListFavoriteSong extends StatelessWidget {
                     ),
                     leading: ClipRRect(
                       borderRadius: BorderRadius.circular(8),
-                      child: Image.asset(
-                        song.imageUrl,
-                        width: 60,
-                        height: 60,
-                        fit: BoxFit.cover,
-                      ),
+                      // child: Image.asset(
+                      //   song.imageUrl,
+                      //   width: 60,
+                      //   height: 60,
+                      //   fit: BoxFit.cover,
+                      // ),
+
+                      // THAY BẰNG ĐOẠN NÀY:
+child: Image.network(
+  song.imageUrl,
+  width: 60,
+  height: 60,
+  fit: BoxFit.cover,
+  // Thêm errorBuilder để tránh văng app nếu link ảnh từ API bị lỗi
+  errorBuilder: (context, error, stackTrace) => const Icon(Icons.music_note, size: 40), 
+),
                     ),
                     title: Text(
                       song.title,
