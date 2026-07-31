@@ -1,5 +1,5 @@
 import 'package:audioplayers/audioplayers.dart';
-import 'package:flutter/widgets.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_application_1/module/domain/entities/song.dart';
 import 'package:flutter_application_1/module/domain/usecases/usecase_get_music.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';

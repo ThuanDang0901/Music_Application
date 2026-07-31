@@ -1,8 +1,8 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_application_1/module/data/services/auth_service.dart';
-import 'package:flutter_application_1/module/data/utils/auth_error_handler.dart';
+import 'package:flutter_application_1/module/domain/entities/phone_verification_session.dart';
+import 'package:flutter_application_1/module/presentation/cubit/auth_cubit.dart';
+import 'package:flutter_application_1/module/presentation/cubit/auth_state.dart';
 import 'package:flutter_application_1/module/presentation/cubit/theme_cubit.dart';
 import 'package:flutter_application_1/module/presentation/pages/login_page.dart';
 import 'package:flutter_application_1/module/presentation/pages/home_music.dart';
@@ -20,11 +20,9 @@ class RegisterPage extends StatefulWidget {
 }
 
 class _RegisterPageState extends State<RegisterPage> {
-  final AuthService _authService = AuthService();
   final _formKey = GlobalKey<FormState>();
 
   RegisterMethod _currentMethod = RegisterMethod.email;
-  bool _isLoading = false;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   bool _agreeToTerms = false;
@@ -56,175 +54,93 @@ class _RegisterPageState extends State<RegisterPage> {
       return;
     }
 
-    setState(() => _isLoading = true);
-
-    try {
-      if (_currentMethod == RegisterMethod.email) {
-        await _registerWithEmail();
-      } else if (_currentMethod == RegisterMethod.phone) {
-        await _registerWithPhone();
-      }
-    } on FirebaseAuthException catch (e) {
-      if (mounted) {
-        ToastHelper.showError(
-          context: context,
-          message: AuthErrorHandler.getErrorMessage(e),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ToastHelper.showError(
-          context: context,
-          message: 'Đã xảy ra lỗi không mong muốn. Vui lòng thử lại.',
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+    if (_currentMethod == RegisterMethod.email) {
+      await _registerWithEmail();
+    } else if (_currentMethod == RegisterMethod.phone) {
+      await _registerWithPhone();
     }
   }
 
   Future<void> _registerWithEmail() async {
-    await _authService.createUserWithEmailAndPassword(
+    await context.read<AuthCubit>().signUpWithEmail(
       email: _emailController.text,
       password: _passwordController.text,
       displayName: _nameController.text,
     );
-
-    if (mounted) {
-      ToastHelper.showSuccess(
-        context: context,
-        message: 'Đăng ký tài khoản thành công! Chào mừng bạn đến với Music App.',
-      );
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const HomeMusic()),
-      );
-    }
   }
 
   Future<void> _registerWithPhone() async {
-    final fullPhone = AuthService.normalizePhoneNumber(
+    await context.read<AuthCubit>().requestPhoneSignUpOtp(
       dialCode: _phoneCountryCode,
-      rawNumber: _phoneNumber,
-    );
-
-    if (!AuthService.isValidInternationalPhone(fullPhone)) {
-      ToastHelper.showWarning(
-        context: context,
-        message:
-            'Số điện thoại không hợp lệ (định dạng: +84xxxxxxxx, dài 9-15 ký tự). Vui lòng kiểm tra lại.',
-      );
-      return;
-    }
-
-    setState(() => _isLoading = true);
-
-    await _authService.verifyPhoneNumber(
-      phoneNumber: fullPhone,
-      verificationCompleted: (PhoneAuthCredential credential) async {
-        try {
-          await _authService.signUpWithPhone(
-            verificationId: credential.verificationId ?? '',
-            smsCode: credential.smsCode ?? '',
-            displayName: _nameController.text,
-          );
-          if (mounted) {
-            ToastHelper.showSuccess(
-              context: context,
-              message: 'Đăng ký thành công!',
-            );
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (_) => const HomeMusic()),
-            );
-          }
-        } on FirebaseAuthException catch (e) {
-          if (mounted) {
-            ToastHelper.showError(
-              context: context,
-              message: AuthErrorHandler.getErrorMessage(e),
-            );
-          }
-        } finally {
-          if (mounted) setState(() => _isLoading = false);
-        }
-      },
-      verificationFailed: (FirebaseAuthException e) {
-        if (mounted) {
-          setState(() => _isLoading = false);
-          ToastHelper.showError(
-            context: context,
-            message: AuthErrorHandler.getErrorMessage(e),
-          );
-        }
-      },
-      codeSent: (String verificationId, int? resendToken) {
-        if (mounted) {
-          setState(() => _isLoading = false);
-          ToastHelper.showInfo(
-            context: context,
-            message: 'Mã xác thực OTP đã được gửi đến số điện thoại $fullPhone',
-          );
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => OtpVerificationPage(
-                verificationId: verificationId,
-                phoneNumber: fullPhone,
-                isSignUp: true,
-                displayName: _nameController.text,
-              ),
-            ),
-          );
-        }
-      },
-      codeAutoRetrievalTimeout: (String verificationId) {
-        debugPrint('[RegisterPhone] codeAutoRetrievalTimeout for $verificationId');
-      },
+      phoneNumber: _phoneNumber,
+      displayName: _nameController.text,
     );
   }
 
   Future<void> _registerWithGoogle() async {
-    setState(() => _isLoading = true);
-    try {
-      await _authService.signInWithGoogle();
-      if (mounted) {
-        ToastHelper.showSuccess(
+    await context.read<AuthCubit>().signInWithGoogle();
+  }
+
+  void _navigateToOtp(PhoneVerificationSession session) {
+    ToastHelper.showInfo(
+      context: context,
+      message: 'Mã xác thực OTP đã được gửi đến số điện thoại ${session.phoneNumber}',
+    );
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => OtpVerificationPage(session: session),
+      ),
+    );
+  }
+
+  void _handleAuthState(BuildContext context, AuthState state) {
+    switch (state.status) {
+      case AuthStatus.failure:
+        ToastHelper.showError(
           context: context,
-          message: 'Đăng ký bằng Google thành công!',
+          message: state.message ?? 'Đăng ký thất bại. Vui lòng thử lại.',
         );
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const HomeMusic()),
-        );
-      }
-    } on FirebaseAuthException catch (e) {
-      if (e.code == 'aborted-by-user') {
-        if (mounted) {
-          ToastHelper.showInfo(
+        break;
+      case AuthStatus.otpCodeSent:
+        final session = state.phoneVerificationSession;
+        if (state.action == AuthAction.requestPhoneSignUpOtp && session != null) {
+          _navigateToOtp(session);
+        }
+        break;
+      case AuthStatus.authenticated:
+        if (state.action == AuthAction.signUpWithEmail) {
+          ToastHelper.showSuccess(
             context: context,
-            message: 'Bạn đã hủy đăng nhập Google.',
+            message:
+                'Đăng ký tài khoản thành công! Chào mừng bạn đến với Music App.',
+          );
+        } else if (state.action == AuthAction.requestPhoneSignUpOtp) {
+          ToastHelper.showSuccess(
+            context: context,
+            message: 'Đăng ký thành công!',
+          );
+        } else if (state.action == AuthAction.signInWithGoogle) {
+          ToastHelper.showSuccess(
+            context: context,
+            message: 'Tiếp tục với Google thành công!',
           );
         }
-      } else if (mounted) {
-        ToastHelper.showError(
-          context: context,
-          message: AuthErrorHandler.getErrorMessage(e),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ToastHelper.showError(
-          context: context,
-          message: 'Đã xảy ra lỗi. Vui lòng thử lại.',
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+
+        if (state.action == AuthAction.signUpWithEmail ||
+            state.action == AuthAction.requestPhoneSignUpOtp ||
+            state.action == AuthAction.signInWithGoogle) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => const HomeMusic()),
+          );
+        }
+        break;
+      case AuthStatus.initial:
+      case AuthStatus.loading:
+      case AuthStatus.passwordResetEmailSent:
+      case AuthStatus.unauthenticated:
+        break;
     }
   }
 
@@ -270,18 +186,23 @@ class _RegisterPageState extends State<RegisterPage> {
   @override
   Widget build(BuildContext context) {
     final isDark = context.watch<ThemeCubit>().state;
+    final authState = context.watch<AuthCubit>().state;
+    final isLoading = authState.isLoading;
     final bgColor = isDark ? const Color(0xFF091227) : const Color(0xFFEAF0FF);
     final textColor = isDark ? Colors.white : Colors.black87;
     final accentColor = const Color(0xFF6C5CE7);
 
-    return Scaffold(
-      backgroundColor: bgColor,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
+    return BlocListener<AuthCubit, AuthState>(
+      listenWhen: (previous, current) => previous != current,
+      listener: _handleAuthState,
+      child: Scaffold(
+        backgroundColor: bgColor,
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
               const SizedBox(height: 30),
               Center(
                 child: Column(
@@ -505,7 +426,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       children: [
                         Checkbox(
                           value: _agreeToTerms,
-                          onChanged: _isLoading
+                          onChanged: isLoading
                               ? null
                               : (v) => setState(() => _agreeToTerms = v ?? false),
                           activeColor: accentColor,
@@ -552,7 +473,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       width: double.infinity,
                       height: 52,
                       child: ElevatedButton(
-                        onPressed: _isLoading ? null : _submitForm,
+                        onPressed: isLoading ? null : _submitForm,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: accentColor,
                           foregroundColor: Colors.white,
@@ -562,7 +483,7 @@ class _RegisterPageState extends State<RegisterPage> {
                           ),
                           disabledBackgroundColor: accentColor.withValues(alpha: 0.5),
                         ),
-                        child: _isLoading
+                        child: isLoading
                             ? const SizedBox(
                                 height: 22,
                                 width: 22,
@@ -615,7 +536,7 @@ class _RegisterPageState extends State<RegisterPage> {
               SizedBox(
                 height: 52,
                 child: OutlinedButton.icon(
-                  onPressed: _isLoading ? null : _registerWithGoogle,
+                  onPressed: isLoading ? null : _registerWithGoogle,
                   style: OutlinedButton.styleFrom(
                     foregroundColor: textColor,
                     side: BorderSide(
@@ -658,7 +579,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     ),
                   ),
                   GestureDetector(
-                    onTap: _isLoading
+                    onTap: isLoading
                         ? null
                         : () {
                             Navigator.pushReplacement(
@@ -682,6 +603,7 @@ class _RegisterPageState extends State<RegisterPage> {
               ),
               const SizedBox(height: 20),
             ],
+            ),
           ),
         ),
       ),

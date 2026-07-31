@@ -444,6 +444,32 @@ class AuthService {
     }
   }
 
+  Future<UserCredential> signInWithPhoneCredentialObject({
+    required PhoneAuthCredential credential,
+  }) async {
+    _log(
+      'PhoneSignIn',
+      'Attempt with auto credential. verificationId=${credential.verificationId}',
+    );
+    try {
+      final result = await _firebaseAuth.signInWithCredential(credential);
+      _log(
+        'PhoneSignIn',
+        'SUCCESS(auto). uid=${result.user?.uid}, phone=${result.user?.phoneNumber}',
+      );
+      return result;
+    } on FirebaseAuthException catch (e) {
+      _log('PhoneSignIn', 'AUTO ERROR code=${e.code}, message=${e.message}');
+      rethrow;
+    } catch (e) {
+      _log('PhoneSignIn', 'Unknown auto sign-in error: $e');
+      throw FirebaseAuthException(
+        code: 'phone-sign-in-failed',
+        message: 'Xác thực OTP tự động thất bại. Vui lòng thử lại.',
+      );
+    }
+  }
+
   Future<UserCredential> signUpWithPhone({
     required String verificationId,
     required String smsCode,
@@ -485,6 +511,42 @@ class AuthService {
     }
   }
 
+  Future<UserCredential> signUpWithPhoneCredentialObject({
+    required PhoneAuthCredential credential,
+    required String displayName,
+  }) async {
+    _log(
+      'PhoneSignUp',
+      'Attempt auto sign-up with displayName=$displayName, verificationId=${credential.verificationId}',
+    );
+    try {
+      final userCredential = await _firebaseAuth.signInWithCredential(
+        credential,
+      );
+
+      if (displayName.trim().isNotEmpty) {
+        await userCredential.user?.updateDisplayName(displayName.trim());
+        await userCredential.user?.reload();
+      }
+
+      final u = _firebaseAuth.currentUser;
+      _log(
+        'PhoneSignUp',
+        'SUCCESS(auto). uid=${u?.uid}, name=${u?.displayName}, phone=${u?.phoneNumber}',
+      );
+      return userCredential;
+    } on FirebaseAuthException catch (e) {
+      _log('PhoneSignUp', 'AUTO ERROR code=${e.code}, message=${e.message}');
+      rethrow;
+    } catch (e) {
+      _log('PhoneSignUp', 'Unknown auto sign-up error: $e');
+      throw FirebaseAuthException(
+        code: 'phone-sign-up-failed',
+        message: 'Đăng ký tự động bằng số điện thoại thất bại.',
+      );
+    }
+  }
+
   Future<void> signOut() async {
     _log('SignOut', 'Starting...');
     try {
@@ -502,8 +564,15 @@ class AuthService {
         _log('SignOut', 'Facebook logOut skip: $fe');
       }
       _log('SignOut', 'SUCCESS. currentUser=${_firebaseAuth.currentUser}');
+    } on FirebaseAuthException catch (e) {
+      _log('SignOut', 'ERROR code=${e.code}, message=${e.message}');
+      rethrow;
     } catch (e) {
-      debugPrint('Sign out error (non-critical): $e');
+      _log('SignOut', 'Unknown error: $e');
+      throw FirebaseAuthException(
+        code: 'sign-out-failed',
+        message: 'Đăng xuất thất bại. Vui lòng thử lại.',
+      );
     }
   }
 
