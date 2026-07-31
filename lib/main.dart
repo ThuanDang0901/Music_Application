@@ -14,6 +14,7 @@ import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:toastification/toastification.dart';
 import 'package:flutter_application_1/module/data/services/jamendo_api_service.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
