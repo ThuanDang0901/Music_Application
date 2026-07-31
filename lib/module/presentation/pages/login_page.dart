@@ -1,8 +1,8 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_application_1/module/data/services/auth_service.dart';
-import 'package:flutter_application_1/module/data/utils/auth_error_handler.dart';
+import 'package:flutter_application_1/module/domain/entities/phone_verification_session.dart';
+import 'package:flutter_application_1/module/presentation/cubit/auth_cubit.dart';
+import 'package:flutter_application_1/module/presentation/cubit/auth_state.dart';
 import 'package:flutter_application_1/module/presentation/cubit/theme_cubit.dart';
 import 'package:flutter_application_1/module/presentation/pages/home_music.dart';
 import 'package:flutter_application_1/module/presentation/pages/otp_verification_page.dart';
@@ -20,11 +20,9 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final AuthService _authService = AuthService();
   final _formKey = GlobalKey<FormState>();
 
   LoginMethod _currentMethod = LoginMethod.email;
-  bool _isLoading = false;
   bool _obscurePassword = true;
   bool _rememberMe = true;
   String _phoneCountryCode = '+84';
@@ -45,218 +43,33 @@ class _LoginPageState extends State<LoginPage> {
   Future<void> _submitLogin() async {
     if (!_formKey.currentState!.validate()) return;
 
-    setState(() => _isLoading = true);
-
-    try {
-      if (_currentMethod == LoginMethod.email) {
-        await _loginWithEmail();
-      } else if (_currentMethod == LoginMethod.phone) {
-        await _loginWithPhone();
-      }
-    } on FirebaseAuthException catch (e) {
-      if (mounted) {
-        ToastHelper.showError(
-          context: context,
-          message: AuthErrorHandler.getErrorMessage(e),
-        );
-      }
-    } catch (_) {
-      if (mounted) {
-        ToastHelper.showError(
-          context: context,
-          message: 'Đăng nhập thất bại. Vui lòng thử lại.',
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+    if (_currentMethod == LoginMethod.email) {
+      await _loginWithEmail();
+    } else if (_currentMethod == LoginMethod.phone) {
+      await _loginWithPhone();
     }
   }
 
   Future<void> _loginWithEmail() async {
-    await _authService.signInWithEmailAndPassword(
+    await context.read<AuthCubit>().signInWithEmail(
       email: _emailController.text,
       password: _passwordController.text,
     );
-
-    if (mounted) {
-      final user = _authService.currentUser;
-      final name = user?.displayName ?? user?.email ?? 'bạn';
-      ToastHelper.showSuccess(
-        context: context,
-        message: 'Chào mừng $name trở lại!',
-      );
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const HomeMusic()),
-      );
-    }
   }
 
   Future<void> _loginWithPhone() async {
-    final fullPhone = AuthService.normalizePhoneNumber(
+    await context.read<AuthCubit>().requestPhoneSignInOtp(
       dialCode: _phoneCountryCode,
-      rawNumber: _phoneNumber,
-    );
-
-    if (!AuthService.isValidInternationalPhone(fullPhone)) {
-      ToastHelper.showWarning(
-        context: context,
-        message:
-            'Số điện thoại không hợp lệ (định dạng: +84xxxxxxxx, dài 9-15 ký tự). Vui lòng kiểm tra lại.',
-      );
-      setState(() => _isLoading = false);
-      return;
-    }
-
-    setState(() => _isLoading = true);
-
-    await _authService.verifyPhoneNumber(
-      phoneNumber: fullPhone,
-      verificationCompleted: (PhoneAuthCredential credential) async {
-        try {
-          await _authService.signInWithPhoneCredential(
-            verificationId: credential.verificationId ?? '',
-            smsCode: credential.smsCode ?? '',
-          );
-          if (mounted) {
-            ToastHelper.showSuccess(
-              context: context,
-              message: 'Đăng nhập thành công!',
-            );
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (_) => const HomeMusic()),
-            );
-          }
-        } on FirebaseAuthException catch (e) {
-          if (mounted) {
-            ToastHelper.showError(
-              context: context,
-              message: AuthErrorHandler.getErrorMessage(e),
-            );
-          }
-        } finally {
-          if (mounted) setState(() => _isLoading = false);
-        }
-      },
-      verificationFailed: (FirebaseAuthException e) {
-        if (mounted) {
-          setState(() => _isLoading = false);
-          ToastHelper.showError(
-            context: context,
-            message: AuthErrorHandler.getErrorMessage(e),
-          );
-        }
-      },
-      codeSent: (String verificationId, int? resendToken) {
-        if (mounted) {
-          setState(() => _isLoading = false);
-          ToastHelper.showInfo(
-            context: context,
-            message: 'Mã OTP đã được gửi đến $fullPhone',
-          );
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => OtpVerificationPage(
-                verificationId: verificationId,
-                phoneNumber: fullPhone,
-                isSignUp: false,
-              ),
-            ),
-          );
-        }
-      },
-      codeAutoRetrievalTimeout: (String verificationId) {
-        debugPrint('[LoginPhone] codeAutoRetrievalTimeout for $verificationId');
-      },
+      phoneNumber: _phoneNumber,
     );
   }
 
   Future<void> _loginWithGoogle() async {
-    setState(() => _isLoading = true);
-    try {
-      await _authService.signInWithGoogle();
-      if (mounted) {
-        final user = _authService.currentUser;
-        final name = user?.displayName ?? 'bạn';
-        ToastHelper.showSuccess(
-          context: context,
-          message: 'Chào mừng $name! Đăng nhập Google thành công.',
-        );
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const HomeMusic()),
-        );
-      }
-    } on FirebaseAuthException catch (e) {
-      if (e.code == 'aborted-by-user') {
-        if (mounted) {
-          ToastHelper.showInfo(
-            context: context,
-            message: 'Bạn đã hủy đăng nhập Google.',
-          );
-        }
-      } else if (mounted) {
-        ToastHelper.showError(
-          context: context,
-          message: AuthErrorHandler.getErrorMessage(e),
-        );
-      }
-    } catch (_) {
-      if (mounted) {
-        ToastHelper.showError(
-          context: context,
-          message: 'Đăng nhập Google thất bại. Vui lòng thử lại.',
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
+    await context.read<AuthCubit>().signInWithGoogle();
   }
 
   Future<void> _loginWithFacebook() async {
-    setState(() => _isLoading = true);
-    try {
-      await _authService.signInWithFacebook();
-      if (mounted) {
-        final user = _authService.currentUser;
-        final name = user?.displayName ?? 'bạn';
-        ToastHelper.showSuccess(
-          context: context,
-          message: 'Chào mừng $name! Đăng nhập Facebook thành công.',
-        );
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const HomeMusic()),
-        );
-      }
-    } on FirebaseAuthException catch (e) {
-      if (e.code == 'aborted-by-user') {
-        if (mounted) {
-          ToastHelper.showInfo(
-            context: context,
-            message: 'Bạn đã hủy đăng nhập Facebook.',
-          );
-        }
-      } else if (mounted) {
-        ToastHelper.showError(
-          context: context,
-          message: AuthErrorHandler.getErrorMessage(e),
-        );
-      }
-    } catch (_) {
-      if (mounted) {
-        ToastHelper.showError(
-          context: context,
-          message: 'Đăng nhập Facebook thất bại. Vui lòng thử lại.',
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
+    await context.read<AuthCubit>().signInWithFacebook();
   }
 
   Future<void> _showForgotPasswordDialog() async {
@@ -266,166 +79,196 @@ class _LoginPageState extends State<LoginPage> {
     final bgColor = isDark ? const Color(0xFF1A1A2E) : Colors.white;
     final borderColor = isDark ? Colors.white24 : Colors.black26;
     final labelColor = isDark ? Colors.white60 : Colors.black54;
-    bool isSending = false;
-
     await showDialog(
       context: context,
       barrierDismissible: true,
       builder: (dialogContext) {
-        return StatefulBuilder(
-          builder: (ctx, setDialogState) {
-            return AlertDialog(
-              backgroundColor: bgColor,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-              ),
-              title: Text(
-                'Quên mật khẩu',
+        return AlertDialog(
+          backgroundColor: bgColor,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: Text(
+            'Quên mật khẩu',
+            style: TextStyle(
+              color: textColor,
+              fontWeight: FontWeight.w700,
+              fontSize: 20,
+            ),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Nhập email của bạn, chúng tôi sẽ gửi liên kết đặt lại mật khẩu đến hộp thư của bạn.',
                 style: TextStyle(
-                  color: textColor,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 20,
+                  color: textColor.withValues(alpha: 0.7),
+                  fontSize: 14,
+                  height: 1.4,
                 ),
               ),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Nhập email của bạn, chúng tôi sẽ gửi liên kết đặt lại mật khẩu đến hộp thư của bạn.',
-                    style: TextStyle(
-                      color: textColor.withValues(alpha: 0.7),
-                      fontSize: 14,
-                      height: 1.4,
-                    ),
+              const SizedBox(height: 18),
+              TextField(
+                controller: _forgotEmailController,
+                style: TextStyle(color: textColor, fontSize: 15),
+                keyboardType: TextInputType.emailAddress,
+                decoration: InputDecoration(
+                  labelText: 'Email',
+                  labelStyle: TextStyle(color: labelColor, fontSize: 14),
+                  prefixIcon: Icon(
+                    Icons.email_outlined,
+                    color: isDark ? Colors.white54 : Colors.black45,
                   ),
-                  const SizedBox(height: 18),
-                  TextField(
-                    controller: _forgotEmailController,
-                    style: TextStyle(color: textColor, fontSize: 15),
-                    keyboardType: TextInputType.emailAddress,
-                    decoration: InputDecoration(
-                      labelText: 'Email',
-                      labelStyle: TextStyle(color: labelColor, fontSize: 14),
-                      prefixIcon: Icon(
-                        Icons.email_outlined,
-                        color: isDark ? Colors.white54 : Colors.black45,
-                      ),
-                      filled: true,
-                      fillColor: isDark
-                          ? Colors.white.withValues(alpha: 0.05)
-                          : Colors.grey.shade100,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: borderColor),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: accentColor, width: 2),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: borderColor),
-                      ),
-                    ),
+                  filled: true,
+                  fillColor: isDark
+                      ? Colors.white.withValues(alpha: 0.05)
+                      : Colors.grey.shade100,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: borderColor),
                   ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: isSending ? null : () => Navigator.pop(ctx),
-                  child: Text(
-                    'Hủy',
-                    style: TextStyle(
-                      color: textColor.withValues(alpha: 0.6),
-                      fontSize: 14,
-                    ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: accentColor, width: 2),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: borderColor),
                   ),
                 ),
-                ElevatedButton(
-                  onPressed: isSending
-                      ? null
-                      : () async {
-                          final email = _forgotEmailController.text.trim();
-                          if (email.isEmpty) {
-                            ToastHelper.showWarning(
-                              context: dialogContext,
-                              message: 'Vui lòng nhập địa chỉ email.',
-                            );
-                            return;
-                          }
-                          final regex = RegExp(
-                            r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
-                          );
-                          if (!regex.hasMatch(email)) {
-                            ToastHelper.showWarning(
-                              context: dialogContext,
-                              message: 'Email không hợp lệ.',
-                            );
-                            return;
-                          }
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: Text(
+                'Hủy',
+                style: TextStyle(
+                  color: textColor.withValues(alpha: 0.6),
+                  fontSize: 14,
+                ),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final email = _forgotEmailController.text.trim();
+                if (email.isEmpty) {
+                  ToastHelper.showWarning(
+                    context: dialogContext,
+                    message: 'Vui lòng nhập địa chỉ email.',
+                  );
+                  return;
+                }
+                final regex = RegExp(
+                  r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+                );
+                if (!regex.hasMatch(email)) {
+                  ToastHelper.showWarning(
+                    context: dialogContext,
+                    message: 'Email không hợp lệ.',
+                  );
+                  return;
+                }
 
-                          setDialogState(() => isSending = true);
-                          try {
-                            await _authService.sendPasswordResetEmail(email);
-                            if (ctx.mounted) {
-                              ToastHelper.showSuccess(
-                                context: ctx,
-                                message:
-                                    'Liên kết đặt lại mật khẩu đã được gửi. Vui lòng kiểm tra hộp thư email của bạn.',
-                              );
-                              Navigator.pop(ctx);
-                              _forgotEmailController.clear();
-                            }
-                          } on FirebaseAuthException catch (e) {
-                            if (ctx.mounted) {
-                              ToastHelper.showError(
-                                context: ctx,
-                                message: AuthErrorHandler.getErrorMessage(e),
-                              );
-                            }
-                          } catch (_) {
-                            if (ctx.mounted) {
-                              ToastHelper.showError(
-                                context: ctx,
-                                message:
-                                    'Gửi email thất bại. Vui lòng thử lại.',
-                              );
-                            }
-                          } finally {
-                            if (ctx.mounted) {
-                              setDialogState(() => isSending = false);
-                            }
-                          }
-                        },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: accentColor,
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  child: isSending
-                      ? const SizedBox(
-                          height: 18,
-                          width: 18,
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                            strokeWidth: 2,
-                          ),
-                        )
-                      : const Text(
-                          'Gửi',
-                          style: TextStyle(fontWeight: FontWeight.w600),
-                        ),
+                Navigator.pop(dialogContext);
+                context.read<AuthCubit>().resetPassword(email);
+                _forgotEmailController.clear();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: accentColor,
+                foregroundColor: Colors.white,
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
                 ),
-              ],
-            );
-          },
+              ),
+              child: const Text(
+                'Gửi',
+                style: TextStyle(fontWeight: FontWeight.w600),
+              ),
+            ),
+          ],
         );
       },
     );
+  }
+
+  void _navigateToOtp(PhoneVerificationSession session) {
+    ToastHelper.showInfo(
+      context: context,
+      message: 'Mã OTP đã được gửi đến ${session.phoneNumber}',
+    );
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => OtpVerificationPage(session: session),
+      ),
+    );
+  }
+
+  void _handleAuthState(BuildContext context, AuthState state) {
+    switch (state.status) {
+      case AuthStatus.failure:
+        ToastHelper.showError(
+          context: context,
+          message: state.message ?? 'Đăng nhập thất bại. Vui lòng thử lại.',
+        );
+        break;
+      case AuthStatus.otpCodeSent:
+        final session = state.phoneVerificationSession;
+        if (state.action == AuthAction.requestPhoneSignInOtp && session != null) {
+          _navigateToOtp(session);
+        }
+        break;
+      case AuthStatus.authenticated:
+        final user = state.user;
+        final name = user?.displayName ?? user?.email ?? user?.phoneNumber ?? 'bạn';
+        if (state.action == AuthAction.signInWithEmail) {
+          ToastHelper.showSuccess(
+            context: context,
+            message: 'Chào mừng $name trở lại!',
+          );
+        } else if (state.action == AuthAction.signInWithGoogle) {
+          ToastHelper.showSuccess(
+            context: context,
+            message: 'Chào mừng $name! Đăng nhập Google thành công.',
+          );
+        } else if (state.action == AuthAction.signInWithFacebook) {
+          ToastHelper.showSuccess(
+            context: context,
+            message: 'Chào mừng $name! Đăng nhập Facebook thành công.',
+          );
+        } else if (state.action == AuthAction.requestPhoneSignInOtp) {
+          ToastHelper.showSuccess(
+            context: context,
+            message: 'Đăng nhập thành công!',
+          );
+        }
+
+        if (state.action == AuthAction.signInWithEmail ||
+            state.action == AuthAction.signInWithGoogle ||
+            state.action == AuthAction.signInWithFacebook ||
+            state.action == AuthAction.requestPhoneSignInOtp) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (_) => const HomeMusic()),
+          );
+        }
+        break;
+      case AuthStatus.passwordResetEmailSent:
+        ToastHelper.showSuccess(
+          context: context,
+          message:
+              'Liên kết đặt lại mật khẩu đã được gửi. Vui lòng kiểm tra hộp thư email của bạn.',
+        );
+        break;
+      case AuthStatus.initial:
+      case AuthStatus.loading:
+      case AuthStatus.unauthenticated:
+        break;
+    }
   }
 
   InputDecoration _inputDecoration({
@@ -470,18 +313,23 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     final isDark = context.watch<ThemeCubit>().state;
+    final authState = context.watch<AuthCubit>().state;
+    final isLoading = authState.isLoading;
     final bgColor = isDark ? const Color(0xFF091227) : const Color(0xFFEAF0FF);
     final textColor = isDark ? Colors.white : Colors.black87;
     final accentColor = const Color(0xFF6C5CE7);
 
-    return Scaffold(
-      backgroundColor: bgColor,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
+    return BlocListener<AuthCubit, AuthState>(
+      listenWhen: (previous, current) => previous != current,
+      listener: _handleAuthState,
+      child: Scaffold(
+        backgroundColor: bgColor,
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
               const SizedBox(height: 30),
               Center(
                 child: Column(
@@ -622,7 +470,7 @@ class _LoginPageState extends State<LoginPage> {
                             children: [
                               Checkbox(
                                 value: _rememberMe,
-                                onChanged: _isLoading
+                                onChanged: isLoading
                                     ? null
                                     : (v) =>
                                         setState(() => _rememberMe = v ?? false),
@@ -642,7 +490,7 @@ class _LoginPageState extends State<LoginPage> {
                             ],
                           ),
                           TextButton(
-                            onPressed: _isLoading ? null : _showForgotPasswordDialog,
+                            onPressed: isLoading ? null : _showForgotPasswordDialog,
                             child: Text(
                               'Quên mật khẩu?',
                               style: TextStyle(
@@ -714,7 +562,7 @@ class _LoginPageState extends State<LoginPage> {
                       width: double.infinity,
                       height: 54,
                       child: ElevatedButton(
-                        onPressed: _isLoading ? null : _submitLogin,
+                        onPressed: isLoading ? null : _submitLogin,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: accentColor,
                           foregroundColor: Colors.white,
@@ -724,7 +572,7 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                           disabledBackgroundColor: accentColor.withValues(alpha: 0.5),
                         ),
-                        child: _isLoading
+                        child: isLoading
                             ? const SizedBox(
                                 height: 22,
                                 width: 22,
@@ -780,7 +628,7 @@ class _LoginPageState extends State<LoginPage> {
                     child: SizedBox(
                       height: 52,
                       child: OutlinedButton.icon(
-                        onPressed: _isLoading ? null : _loginWithGoogle,
+                        onPressed: isLoading ? null : _loginWithGoogle,
                         style: OutlinedButton.styleFrom(
                           foregroundColor: textColor,
                           side: BorderSide(
@@ -792,7 +640,7 @@ class _LoginPageState extends State<LoginPage> {
                           backgroundColor:
                               isDark ? const Color(0xFF1A1A2E) : Colors.white,
                         ),
-                        icon: _isLoading
+                        icon: isLoading
                             ? const SizedBox.shrink()
                             : Icon(
                                 Icons.g_mobiledata_outlined,
@@ -815,7 +663,7 @@ class _LoginPageState extends State<LoginPage> {
                     child: SizedBox(
                       height: 52,
                       child: OutlinedButton.icon(
-                        onPressed: _isLoading ? null : _loginWithFacebook,
+                        onPressed: isLoading ? null : _loginWithFacebook,
                         style: OutlinedButton.styleFrom(
                           foregroundColor: textColor,
                           side: BorderSide(
@@ -827,7 +675,7 @@ class _LoginPageState extends State<LoginPage> {
                           backgroundColor:
                               isDark ? const Color(0xFF1A1A2E) : Colors.white,
                         ),
-                        icon: _isLoading
+                        icon: isLoading
                             ? const SizedBox.shrink()
                             : const Icon(
                                 Icons.facebook_rounded,
@@ -859,7 +707,7 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ),
                   GestureDetector(
-                    onTap: _isLoading
+                    onTap: isLoading
                         ? null
                         : () {
                             Navigator.pushReplacement(
@@ -883,6 +731,7 @@ class _LoginPageState extends State<LoginPage> {
               ),
               const SizedBox(height: 16),
             ],
+            ),
           ),
         ),
       ),

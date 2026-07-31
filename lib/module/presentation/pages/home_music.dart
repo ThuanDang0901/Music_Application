@@ -1,7 +1,7 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
-import 'package:flutter_application_1/module/data/services/auth_service.dart';
+import 'package:flutter_application_1/module/presentation/cubit/auth_cubit.dart';
+import 'package:flutter_application_1/module/presentation/cubit/auth_state.dart';
 import 'package:flutter_application_1/module/presentation/cubit/music_cubit.dart';
 import 'package:flutter_application_1/module/presentation/cubit/music_state.dart';
 import 'package:flutter_application_1/module/presentation/cubit/theme_cubit.dart';
@@ -64,9 +64,40 @@ class HomeMusic extends StatelessWidget {
     );
 
     if (confirm == true) {
-      try {
-        await AuthService().signOut();
-        if (context.mounted) {
+      context.read<AuthCubit>().signOut();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = context.watch<ThemeCubit>().state;
+    final authState = context.watch<AuthCubit>().state;
+
+    final bgColor = isDark ? const Color(0xFF091227) : const Color(0xFFEAF0FF);
+    final textColor = isDark ? Colors.white : Colors.black;
+    final subTextColor = isDark ? Colors.white60 : Colors.black45;
+    final iconColor = isDark ? Colors.white : Colors.black87;
+    final accentColor = const Color(0xFF6C5CE7);
+
+    final user = authState.user;
+    final displayName =
+        user?.displayName ?? user?.email ?? user?.phoneNumber ?? 'Người dùng';
+    final userEmail = user?.email ?? user?.phoneNumber ?? '';
+    final photoUrl = user?.photoUrl;
+
+    return BlocListener<AuthCubit, AuthState>(
+      listener: (context, state) {
+        if (state.status == AuthStatus.failure &&
+            state.action == AuthAction.signOut) {
+          ToastHelper.showError(
+            context: context,
+            message: state.message ?? 'Đăng xuất thất bại. Vui lòng thử lại.',
+          );
+          context.read<AuthCubit>().consumeTransientState();
+        }
+
+        if (state.status == AuthStatus.unauthenticated &&
+            state.action == AuthAction.signOut) {
           ToastHelper.showSuccess(
             context: context,
             message: 'Đã đăng xuất thành công.',
@@ -77,34 +108,8 @@ class HomeMusic extends StatelessWidget {
             (route) => false,
           );
         }
-      } catch (_) {
-        if (context.mounted) {
-          ToastHelper.showError(
-            context: context,
-            message: 'Đăng xuất thất bại. Vui lòng thử lại.',
-          );
-        }
-      }
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final isDark = context.watch<ThemeCubit>().state;
-
-    final bgColor = isDark ? const Color(0xFF091227) : const Color(0xFFEAF0FF);
-    final textColor = isDark ? Colors.white : Colors.black;
-    final subTextColor = isDark ? Colors.white60 : Colors.black45;
-    final iconColor = isDark ? Colors.white : Colors.black87;
-    final accentColor = const Color(0xFF6C5CE7);
-
-    final user = FirebaseAuth.instance.currentUser;
-    final displayName =
-        user?.displayName ?? user?.email ?? user?.phoneNumber ?? 'Người dùng';
-    final userEmail = user?.email ?? user?.phoneNumber ?? '';
-    final photoUrl = user?.photoURL;
-
-    return Scaffold(
+      },
+      child: Scaffold(
       drawer: Drawer(
         backgroundColor: bgColor,
         child: SafeArea(
@@ -540,6 +545,6 @@ class HomeMusic extends StatelessWidget {
           ],
         ),
       ),
-    );
+    ));
   }
 }
