@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/module/domain/entities/song.dart';
 import 'package:flutter_application_1/module/presentation/cubit/music_cubit.dart';
 import 'package:flutter_application_1/module/presentation/cubit/music_state.dart';
 import 'package:flutter_application_1/module/presentation/cubit/theme_cubit.dart';
@@ -35,15 +36,22 @@ class MiniPlayer extends StatelessWidget {
         );
         return InkWell(
           onTap: () {
-            final currentIndex = state.playlistSongs.indexOf(
-              state.currentSong!,
-            );
+            List<Song> activePlaylist = state.playlistSongs;
+            int currentIndex = activePlaylist.indexOf(state.currentSong!);
+            if (currentIndex == -1) {
+              activePlaylist = state.recommendedSongs;
+              currentIndex = activePlaylist.indexOf(state.currentSong!);
+            }
+            if (currentIndex == -1) {
+              activePlaylist = [state.currentSong!];
+              currentIndex = 0;
+            }
             Navigator.push(
               context,
               MaterialPageRoute(
                 builder: (context) => DetailMusic(
-                  playlist: state.recommendedSongs,
-                  initialIndex: currentIndex != 1 ? currentIndex : 0,
+                  playlist: activePlaylist,
+                  initialIndex: currentIndex,
                 ),
               ),
             );
@@ -91,7 +99,16 @@ class MiniPlayer extends StatelessWidget {
                       children: [
                         ClipRRect(
                           borderRadius: BorderRadius.circular(8.0),
-                          child: Image.asset(song.imageUrl, scale: 15),
+                          child: song.imageUrl.startsWith('http')
+                              ? Image.network(
+                                  song.imageUrl,
+                                  width: 40,
+                                  height: 40,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) =>
+                                      const Icon(Icons.album, size: 40, color: Colors.grey),
+                                )
+                              : Image.asset(song.imageUrl, scale: 15),
                         ),
                         const SizedBox(width: 12),
                         Expanded(

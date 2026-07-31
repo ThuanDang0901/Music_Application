@@ -24,6 +24,12 @@ MusicRepositoriesImpl({required this.apiService});
     return trackModels.map((model) => model.toEntity()).toList();
   }
 
+  @override
+  Future<List<Song>> searchSongs(String query) async {
+    final List<TrackModel> trackModels = await apiService.searchTracks(query, limit: 20);
+    return trackModels.map((model) => model.toEntity()).toList();
+  }
+
 
 
   // @override
