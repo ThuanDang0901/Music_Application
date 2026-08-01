@@ -4,7 +4,7 @@ import '../models/track_model.dart';
 
 
 class JamendoApiService {
-  // Thay thế bằng Client ID thực tế của bạn
+  
   static const String clientId = 'd3615367'; 
   static const String baseUrl = 'https://api.jamendo.com/v3.0';
 
