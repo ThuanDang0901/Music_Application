@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/module/domain/entities/song.dart';
+import 'package:flutter_application_1/module/presentation/cubit/auth_cubit.dart';
 import 'package:flutter_application_1/module/presentation/cubit/music_cubit.dart';
 import 'package:flutter_application_1/module/presentation/cubit/music_state.dart';
 import 'package:flutter_application_1/module/presentation/cubit/search_cubit.dart';
@@ -29,7 +30,7 @@ class _SearchPageState extends State<SearchPage> {
     'acoustic',
     'chill',
     'relax',
-    'hiphop'
+    'hiphop',
   ];
 
   @override
@@ -85,7 +86,10 @@ class _SearchPageState extends State<SearchPage> {
           children: [
             // Search Header
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 12.0,
+              ),
               child: Row(
                 children: [
                   GestureDetector(
@@ -97,13 +101,19 @@ class _SearchPageState extends State<SearchPage> {
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
+                            color: Colors.black.withValues(
+                              alpha: isDark ? 0.2 : 0.05,
+                            ),
                             blurRadius: 8,
                             offset: const Offset(0, 3),
-                          )
+                          ),
                         ],
                       ),
-                      child: Icon(Icons.arrow_back_ios_new, color: textColor, size: 20),
+                      child: Icon(
+                        Icons.arrow_back_ios_new,
+                        color: textColor,
+                        size: 20,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -114,10 +124,12 @@ class _SearchPageState extends State<SearchPage> {
                         borderRadius: BorderRadius.circular(30),
                         boxShadow: [
                           BoxShadow(
-                            color: accentColor.withValues(alpha: isDark ? 0.15 : 0.08),
+                            color: accentColor.withValues(
+                              alpha: isDark ? 0.15 : 0.08,
+                            ),
                             blurRadius: 12,
                             offset: const Offset(0, 4),
-                          )
+                          ),
                         ],
                       ),
                       child: TextField(
@@ -126,7 +138,10 @@ class _SearchPageState extends State<SearchPage> {
                         style: TextStyle(color: textColor, fontSize: 16),
                         decoration: InputDecoration(
                           hintText: 'Tìm kiếm bài hát, nghệ sĩ...',
-                          hintStyle: TextStyle(color: subTextColor, fontSize: 15),
+                          hintStyle: TextStyle(
+                            color: subTextColor,
+                            fontSize: 15,
+                          ),
                           prefixIcon: Icon(Icons.search, color: accentColor),
                           suffixIcon: _searchController.text.isNotEmpty
                               ? GestureDetector(
@@ -134,11 +149,16 @@ class _SearchPageState extends State<SearchPage> {
                                     _searchController.clear();
                                     context.read<SearchCubit>().clearSearch();
                                   },
-                                  child: Icon(Icons.close_rounded, color: textColor),
+                                  child: Icon(
+                                    Icons.close_rounded,
+                                    color: textColor,
+                                  ),
                                 )
                               : null,
                           border: InputBorder.none,
-                          contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                          contentPadding: const EdgeInsets.symmetric(
+                            vertical: 14,
+                          ),
                         ),
                       ),
                     ),
@@ -152,13 +172,28 @@ class _SearchPageState extends State<SearchPage> {
               child: BlocBuilder<SearchCubit, SearchState>(
                 builder: (context, state) {
                   if (state is SearchInitial) {
-                    return _buildInitialState(textColor, subTextColor, accentColor, cardBgColor);
+                    return _buildInitialState(
+                      textColor,
+                      subTextColor,
+                      accentColor,
+                      cardBgColor,
+                    );
                   } else if (state is SearchLoading) {
                     return _buildLoadingState(accentColor);
                   } else if (state is SearchError) {
-                    return _buildErrorState(state.message, textColor, accentColor);
+                    return _buildErrorState(
+                      state.message,
+                      textColor,
+                      accentColor,
+                    );
                   } else if (state is SearchLoaded) {
-                    return _buildResultsList(state.results, textColor, subTextColor, accentColor, cardBgColor);
+                    return _buildResultsList(
+                      state.results,
+                      textColor,
+                      subTextColor,
+                      accentColor,
+                      cardBgColor,
+                    );
                   }
                   return const SizedBox.shrink();
                 },
@@ -173,7 +208,12 @@ class _SearchPageState extends State<SearchPage> {
     );
   }
 
-  Widget _buildInitialState(Color textColor, Color subTextColor, Color accentColor, Color cardBg) {
+  Widget _buildInitialState(
+    Color textColor,
+    Color subTextColor,
+    Color accentColor,
+    Color cardBg,
+  ) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24.0),
       child: Column(
@@ -195,7 +235,10 @@ class _SearchPageState extends State<SearchPage> {
               return GestureDetector(
                 onTap: () => _onSuggestionTap(suggestion),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 10,
+                  ),
                   decoration: BoxDecoration(
                     color: cardBg,
                     borderRadius: BorderRadius.circular(20),
@@ -227,14 +270,11 @@ class _SearchPageState extends State<SearchPage> {
                 const SizedBox(height: 16),
                 Text(
                   'Khám phá những giai điệu yêu thích',
-                  style: TextStyle(
-                    color: subTextColor,
-                    fontSize: 15,
-                  ),
+                  style: TextStyle(color: subTextColor, fontSize: 15),
                 ),
               ],
             ),
-          )
+          ),
         ],
       ),
     );
@@ -261,7 +301,7 @@ class _SearchPageState extends State<SearchPage> {
               fontWeight: FontWeight.w500,
               fontSize: 14,
             ),
-          )
+          ),
         ],
       ),
     );
@@ -274,11 +314,19 @@ class _SearchPageState extends State<SearchPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.error_outline_rounded, size: 64, color: Colors.redAccent.withValues(alpha: 0.8)),
+            Icon(
+              Icons.error_outline_rounded,
+              size: 64,
+              color: Colors.redAccent.withValues(alpha: 0.8),
+            ),
             const SizedBox(height: 16),
             Text(
               message,
-              style: TextStyle(color: textColor, fontSize: 16, fontWeight: FontWeight.w500),
+              style: TextStyle(
+                color: textColor,
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+              ),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 20),
@@ -292,18 +340,27 @@ class _SearchPageState extends State<SearchPage> {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
               ),
               icon: const Icon(Icons.refresh_rounded),
               label: const Text('Thử lại'),
-            )
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildResultsList(List<Song> songs, Color textColor, Color subTextColor, Color accentColor, Color cardBg) {
+  Widget _buildResultsList(
+    List<Song> songs,
+    Color textColor,
+    Color subTextColor,
+    Color accentColor,
+    Color cardBg,
+  ) {
     if (songs.isEmpty) {
       return Center(
         child: Column(
@@ -326,10 +383,7 @@ class _SearchPageState extends State<SearchPage> {
             const SizedBox(height: 8),
             Text(
               'Hãy thử tìm kiếm với từ khóa khác',
-              style: TextStyle(
-                color: subTextColor,
-                fontSize: 14,
-              ),
+              style: TextStyle(color: subTextColor, fontSize: 14),
             ),
           ],
         ),
@@ -343,7 +397,9 @@ class _SearchPageState extends State<SearchPage> {
           itemCount: songs.length,
           itemBuilder: (context, index) {
             final song = songs[index];
-            final isCurrent = musicState is MusicLoaded && musicState.currentSong?.audioUrl == song.audioUrl;
+            final isCurrent =
+                musicState is MusicLoaded &&
+                musicState.currentSong?.audioUrl == song.audioUrl;
             final isPlaying = isCurrent && musicState.isPlaying;
 
             return Container(
@@ -352,18 +408,24 @@ class _SearchPageState extends State<SearchPage> {
                 color: cardBg,
                 borderRadius: BorderRadius.circular(16),
                 border: isCurrent
-                    ? Border.all(color: accentColor.withValues(alpha: 0.5), width: 1.5)
+                    ? Border.all(
+                        color: accentColor.withValues(alpha: 0.5),
+                        width: 1.5,
+                      )
                     : Border.all(color: Colors.transparent),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withValues(alpha: 0.03),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
-                  )
+                  ),
                 ],
               ),
               child: ListTile(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 leading: ClipRRect(
                   borderRadius: BorderRadius.circular(10),
                   child: Image.network(
@@ -394,7 +456,9 @@ class _SearchPageState extends State<SearchPage> {
                   child: Text(
                     song.artist,
                     style: TextStyle(
-                      color: isCurrent ? accentColor.withValues(alpha: 0.7) : subTextColor,
+                      color: isCurrent
+                          ? accentColor.withValues(alpha: 0.7)
+                          : subTextColor,
                       fontSize: 13,
                     ),
                     maxLines: 1,
@@ -418,6 +482,7 @@ class _SearchPageState extends State<SearchPage> {
                   },
                 ),
                 onTap: () {
+                  final userId = context.read<AuthCubit>().state.user?.id;
                   context.read<MusicCubit>().playMusic(song);
                   Navigator.push(
                     context,
@@ -425,6 +490,7 @@ class _SearchPageState extends State<SearchPage> {
                       builder: (context) => DetailMusic(
                         playlist: songs,
                         initialIndex: index,
+                        userId: userId,
                       ),
                     ),
                   );
