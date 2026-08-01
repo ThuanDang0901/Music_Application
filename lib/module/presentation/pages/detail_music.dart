@@ -9,10 +9,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 class DetailMusic extends StatefulWidget {
   final List<Song> playlist;
   final int initialIndex;
+  final String? userId;
   const DetailMusic({
     super.key,
     required this.playlist,
     required this.initialIndex,
+    required this.userId,
   });
 
   @override
@@ -124,12 +126,17 @@ class _DetailMusicState extends State<DetailMusic> {
                               //   width: 300,
                               // ),
                               Image.network(
-                              song.imageUrl,
-                              fit: BoxFit.cover,
-                              height: 300,
-                              width: 300,
-                              errorBuilder: (context, error, stackTrace) => const Icon(Icons.album, size: 100, color: Colors.grey),
-                            ),
+                                song.imageUrl,
+                                fit: BoxFit.cover,
+                                height: 300,
+                                width: 300,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    const Icon(
+                                      Icons.album,
+                                      size: 100,
+                                      color: Colors.grey,
+                                    ),
+                              ),
                               SizedBox(height: 28),
                               SizedBox(
                                 width: 300,
@@ -165,7 +172,10 @@ class _DetailMusicState extends State<DetailMusic> {
                                         onPressed: () {
                                           context
                                               .read<MusicCubit>()
-                                              .ControlFavoriteSong(song);
+                                              .ControlFavoriteSong(
+                                                song,
+                                                userId: widget.userId,
+                                              );
                                         },
                                         icon: Icon(
                                           state.favoriteSongs.contains(song)
