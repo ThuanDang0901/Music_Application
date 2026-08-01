@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/module/domain/entities/song.dart';
+import 'package:flutter_application_1/module/presentation/cubit/auth_cubit.dart';
 import 'package:flutter_application_1/module/presentation/cubit/music_cubit.dart';
 import 'package:flutter_application_1/module/presentation/cubit/music_state.dart';
 import 'package:flutter_application_1/module/presentation/cubit/theme_cubit.dart';
@@ -36,6 +37,7 @@ class MiniPlayer extends StatelessWidget {
         );
         return InkWell(
           onTap: () {
+            final userId = context.read<AuthCubit>().state.user?.id;
             List<Song> activePlaylist = state.playlistSongs;
             int currentIndex = activePlaylist.indexOf(state.currentSong!);
             if (currentIndex == -1) {
@@ -52,6 +54,7 @@ class MiniPlayer extends StatelessWidget {
                 builder: (context) => DetailMusic(
                   playlist: activePlaylist,
                   initialIndex: currentIndex,
+                  userId: userId,
                 ),
               ),
             );

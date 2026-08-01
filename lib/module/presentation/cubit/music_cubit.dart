@@ -1,15 +1,26 @@
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_application_1/module/domain/entities/song.dart';
+import 'package:flutter_application_1/module/domain/usecases/usecase_add_favorite_song.dart';
 import 'package:flutter_application_1/module/domain/usecases/usecase_get_music.dart';
+import 'package:flutter_application_1/module/domain/usecases/usecase_get_user_favorites.dart';
+import 'package:flutter_application_1/module/domain/usecases/usecase_remove_favorite_song.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'music_state.dart';
 
 class MusicCubit extends Cubit<MusicState> {
   final GetMusicUseCase getMusicUseCase;
+  final GetUserFavoritesUseCase getUserFavoritesUseCase;
+  final AddFavoriteSongUseCase addFavoriteSongUseCase;
+  final RemoveFavoriteSongUseCase removeFavoriteSongUseCase;
   final AudioPlayer _audioPlayer = AudioPlayer();
 
-  MusicCubit({required this.getMusicUseCase}) : super(MusicInitial()) {
+  MusicCubit({
+    required this.getMusicUseCase,
+    required this.getUserFavoritesUseCase,
+    required this.addFavoriteSongUseCase,
+    required this.removeFavoriteSongUseCase,
+  }) : super(MusicInitial()) {
     _audioPlayer.onPositionChanged.listen((pos) {
       if (state is MusicLoaded) {
         emit((state as MusicLoaded).copyWith(currentPosition: pos));
@@ -34,33 +45,69 @@ class MusicCubit extends Cubit<MusicState> {
     });
   }
 
-  Future<void> loadMusicData() async {
+  // Tải dữ liệu bài hát cùng với nhạc yêu thích của User
+  Future<void> loadMusicData({String? userId}) async {
     emit(MusicLoading());
     try {
       final recommended = await getMusicUseCase.executeRecommendeds();
       final playlist = await getMusicUseCase.executePlaylist();
 
-      emit(MusicLoaded(recommendedSongs: recommended, playlistSongs: playlist));
+      List<Song> favorites = [];
+      if (userId != null && userId.isNotEmpty) {
+        favorites = await getUserFavoritesUseCase.execute(userId);
+      }
+
+      emit(
+        MusicLoaded(
+          recommendedSongs: recommended,
+          playlistSongs: playlist,
+          favoriteSongs: favorites,
+        ),
+      );
     } catch (e) {
-      debugPrint('=== CHI TIẾT LỖI TẢI NHẠC: $e ===');
-      emit(MusicError('Lỗi tải dữ liệu: $e'));
+      debugPrint('=== LỖI LOAD NHẠC: $e ===');
+      emit(MusicError('Lỗi: $e'));
     }
   }
 
- Future<void> playMusic(Song song) async {
+  Future<void> ControlFavoriteSong(Song song, {String? userId}) async {
     if (state is MusicLoaded) {
-      
+      final currentState = state as MusicLoaded;
+      final List<Song> updatedFavorites = List.from(currentState.favoriteSongs);
+      final isExist = updatedFavorites.any((s) => s.audioUrl == song.audioUrl);
+
+      if (isExist) {
+        updatedFavorites.removeWhere((s) => s.audioUrl == song.audioUrl);
+        emit(currentState.copyWith(favoriteSongs: updatedFavorites));
+
+        if (userId != null && userId.isNotEmpty) {
+          await removeFavoriteSongUseCase.execute(userId, song.audioUrl);
+        }
+      } else {
+        updatedFavorites.add(song);
+        emit(currentState.copyWith(favoriteSongs: updatedFavorites));
+
+        if (userId != null && userId.isNotEmpty) {
+          await addFavoriteSongUseCase.execute(userId, song);
+        }
+      }
+    }
+  }
+
+  Future<void> playMusic(Song song) async {
+    if (state is MusicLoaded) {
       // Kiểm tra xem audioUrl có phải là link mạng (bắt đầu bằng http/https) hay không.
       // Nếu có -> Phát qua UrlSource (nhạc Jamendo)
       // Nếu không (HOẶC) -> Phát qua AssetSource (nhạc mock data)
-      final source = song.audioUrl.startsWith('http') 
-          ? UrlSource(song.audioUrl) 
+      final source = song.audioUrl.startsWith('http')
+          ? UrlSource(song.audioUrl)
           : AssetSource(song.audioUrl);
 
       await _audioPlayer.play(source);
       emit((state as MusicLoaded).copyWith(currentSong: song, isPlaying: true));
     }
   }
+
   Future<void> PauseOrResume() async {
     if (state is MusicLoaded) {
       final currentState = state as MusicLoaded;
@@ -144,19 +191,6 @@ class MusicCubit extends Cubit<MusicState> {
     if (state is MusicLoaded) {
       final currentState = state as MusicLoaded;
       emit(currentState.copyWith(isRepeat: !currentState.isRepeat));
-    }
-  }
-
-  void ControlFavoriteSong(Song song) {
-    if (state is MusicLoaded) {
-      final currentState = state as MusicLoaded;
-      final List<Song> updatedFavorites = List.from(currentState.favoriteSongs);
-      if (updatedFavorites.contains(song)) {
-        updatedFavorites.remove(song);
-      } else {
-        updatedFavorites.add(song);
-      }
-      emit(currentState.copyWith(favoriteSongs: updatedFavorites));
     }
   }
 

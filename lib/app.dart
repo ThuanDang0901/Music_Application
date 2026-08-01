@@ -2,10 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_application_1/module/data/repositories/auth_repository_impl.dart';
 import 'package:flutter_application_1/module/data/repositories/music_repositories_impl.dart';
 import 'package:flutter_application_1/module/data/services/auth_service.dart';
+import 'package:flutter_application_1/module/data/services/favorite_service.dart';
 import 'package:flutter_application_1/module/data/services/jamendo_api_service.dart';
+import 'package:flutter_application_1/module/domain/usecases/usecase_add_favorite_song.dart';
 import 'package:flutter_application_1/module/domain/usecases/usecase_get_current_auth_user.dart';
 import 'package:flutter_application_1/module/domain/usecases/usecase_get_music.dart';
+import 'package:flutter_application_1/module/domain/usecases/usecase_get_user_favorites.dart';
 import 'package:flutter_application_1/module/domain/usecases/usecase_observe_auth_state_changes.dart';
+import 'package:flutter_application_1/module/domain/usecases/usecase_remove_favorite_song.dart';
 import 'package:flutter_application_1/module/domain/usecases/usecase_request_phone_sign_in_otp.dart';
 import 'package:flutter_application_1/module/domain/usecases/usecase_request_phone_sign_up_otp.dart';
 import 'package:flutter_application_1/module/domain/usecases/usecase_resend_phone_otp.dart';
@@ -76,7 +80,8 @@ class AuthGate extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<AuthCubit, AuthState>(
       builder: (context, state) {
-        if (state.isAuthenticated) {
+        if (state.isAuthenticated && state.user != null) {
+          context.read<MusicCubit>().loadMusicData(userId: state.user!.id);
           return const HomeMusic();
         }
         if (state.isLoading) {
@@ -120,6 +125,16 @@ AuthCubit _createAuthCubit() {
 }
 
 MusicCubit _createMusicCubit() {
-  final repository = MusicRepositoriesImpl(apiService: JamendoApiService());
-  return MusicCubit(getMusicUseCase: GetMusicUseCase(repository));
+  final favoriteService = FavoriteService();
+  final repository = MusicRepositoriesImpl(
+    apiService: JamendoApiService(),
+    favoriteService: favoriteService,
+  );
+
+  return MusicCubit(
+    getMusicUseCase: GetMusicUseCase(repository),
+    getUserFavoritesUseCase: GetUserFavoritesUseCase(repository),
+    addFavoriteSongUseCase: AddFavoriteSongUseCase(repository),
+    removeFavoriteSongUseCase: RemoveFavoriteSongUseCase(repository),
+  );
 }
