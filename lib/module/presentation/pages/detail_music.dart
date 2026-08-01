@@ -340,160 +340,169 @@ class _DetailMusicState extends State<DetailMusic> {
     );
   }
   void _showCommentBottomSheet(BuildContext context, Song currentSong) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent, // Để bọc bo góc bên trong Widget
+      builder: (context) {
+        // Gọi riêng 1 file/widget quản lý trạng thái
+        return CommentBottomSheetWidget(song: currentSong); 
+      },
+    );
+  }
+}
+// ==========================================
+// WIDGET BÌNH LUẬN CHUẨN CROSS-PLATFORM
+// ==========================================
+class CommentBottomSheetWidget extends StatefulWidget {
+  final Song song;
+  const CommentBottomSheetWidget({super.key, required this.song});
+
+  @override
+  State<CommentBottomSheetWidget> createState() => _CommentBottomSheetWidgetState();
+}
+
+class _CommentBottomSheetWidgetState extends State<CommentBottomSheetWidget> {
+  final TextEditingController _commentController = TextEditingController();
+  final CommentRepository _commentRepo = CommentRepository();
+  late Stream<List<Comment>> _commentStream; // Biến cache Stream
+
+  @override
+  void initState() {
+    super.initState();
+    // QUAN TRỌNG NHẤT: Khởi tạo Stream đúng 1 lần khi mở khung
+    _commentStream = _commentRepo.getCommentsBySong(widget.song.title);
+  }
+
+  @override
+  void dispose() {
+    _commentController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final isDark = context.read<ThemeCubit>().state;
     final bgColor = isDark ? const Color(0xFF131E3A) : Colors.white;
     final textColor = isDark ? Colors.white : Colors.black87;
+    final user = FirebaseAuth.instance.currentUser;
 
-    // 1. Khởi tạo Controller, Repo và lấy User hiện tại
-    final TextEditingController commentController = TextEditingController();
-    final CommentRepository commentRepo = CommentRepository();
-    final user = FirebaseAuth.instance.currentUser; 
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true, 
-      backgroundColor: bgColor,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+    return Container(
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) {
-        return Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom,
-            left: 16,
-            right: 16,
-            top: 16,
-          ),
-          child: SizedBox(
-            height: MediaQuery.of(context).size.height * 0.6, 
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 5,
-                    decoration: BoxDecoration(
-                      color: Colors.grey,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  "Bình luận - ${currentSong.title}",
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: textColor,
-                  ),
-                ),
-                const Divider(),
-                
-                // 2. STREAMBUILDER: Tự động hứng dữ liệu Realtime từ Firebase
-                Expanded(
-                  child: StreamBuilder<List<Comment>>(
-                    stream: commentRepo.getCommentsBySong(currentSong.title),
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const Center(child: CircularProgressIndicator());
-                      }
-                      
-                      if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                        return Center(
-                          child: Text(
-                            "Chưa có bình luận nào. Hãy là người đầu tiên!",
-                            style: TextStyle(color: textColor.withOpacity(0.5)),
-                          ),
-                        );
-                      }
-
-                      final comments = snapshot.data!;
-                      return ListView.builder(
-                        itemCount: comments.length,
-                        itemBuilder: (context, index) {
-                          final cmt = comments[index];
-                          return ListTile(
-                            leading: CircleAvatar(
-                              backgroundColor: Colors.blueAccent,
-                              child: Text(
-                                cmt.userName.isNotEmpty ? cmt.userName[0].toUpperCase() : '?',
-                                style: const TextStyle(color: Colors.white),
-                              ),
-                            ),
-                            title: Text(
-                              cmt.userName,
-                              style: TextStyle(color: textColor, fontWeight: FontWeight.bold, fontSize: 14),
-                            ),
-                            subtitle: Text(
-                              cmt.content,
-                              style: TextStyle(color: textColor.withOpacity(0.8)),
-                            ),
-                          );
-                        },
-                      );
-                    },
-                  ),
-                ),
-                
-                // 3. TEXTFIELD & NÚT GỬI: Đẩy dữ liệu lên database
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: commentController,
-                        style: TextStyle(color: textColor),
-                        decoration: InputDecoration(
-                          hintText: "Nhập bình luận...",
-                          hintStyle: TextStyle(color: textColor.withOpacity(0.5)),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                        ),
-                      ),
-                    ),
-                    IconButton(
-                      onPressed: () async {
-                        final text = commentController.text.trim();
-                        if (text.isEmpty) return; // Chặn gửi rỗng
-
-                        // Clear ô nhập ngay lập tức tạo cảm giác app chạy nhanh
-                        commentController.clear(); 
-
-                        // Lấy tên user, nếu không có display name thì lấy phần đầu của email
-                        final userName = user?.displayName ?? 
-                                         user?.email?.split('@')[0] ?? 
-                                         'Anonymous';
-
-                        // Đóng gói data
-                        final newComment = Comment(
-                          id: '', 
-                          songId: currentSong.title,
-                          userId: user?.uid ?? 'unknown',
-                          userName: userName,
-                          content: text,
-                          rating: 5.0, // Điểm rating m có thể update giao diện để chọn sau
-                          createdAt: DateTime.now(), 
-                        );
-
-                        // Phi lên Firestore
-                        try {
-                          await commentRepo.addComment(newComment);
-                        } catch (e) {
-                          debugPrint('Lỗi gửi bình luận: $e');
-                        }
-                      },
-                      icon: const Icon(Icons.send, color: Colors.blue),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-              ],
+      padding: EdgeInsets.only(
+        bottom: MediaQuery.of(context).viewInsets.bottom,
+        left: 16,
+        right: 16,
+        top: 16,
+      ),
+      height: MediaQuery.of(context).size.height * 0.6,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Center(
+            child: Container(
+              width: 40,
+              height: 5,
+              decoration: BoxDecoration(color: Colors.grey, borderRadius: BorderRadius.circular(10)),
             ),
           ),
-        );
-      },
+          const SizedBox(height: 16),
+          Text(
+            "Bình luận - ${widget.song.title}",
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: textColor),
+          ),
+          const Divider(),
+          
+          // DÙNG LẠI STREAMBUILDER NHƯNG TRUYỀN BIẾN ĐÃ CACHE VÀO
+          Expanded(
+            child: StreamBuilder<List<Comment>>(
+              stream: _commentStream, 
+              builder: (context, snapshot) {
+                if (snapshot.hasError) {
+                  return Center(child: Text("Lỗi: ${snapshot.error}", style: const TextStyle(color: Colors.red)));
+                }
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return Center(
+                    child: Text(
+                      "Chưa có bình luận nào. Hãy là người đầu tiên!",
+                      style: TextStyle(color: textColor.withOpacity(0.5)),
+                    ),
+                  );
+                }
+
+                final comments = snapshot.data!;
+                return ListView.builder(
+                  itemCount: comments.length,
+                  itemBuilder: (context, index) {
+                    final cmt = comments[index];
+                    return ListTile(
+                      leading: CircleAvatar(
+                        backgroundColor: Colors.blueAccent,
+                        child: Text(
+                          cmt.userName.isNotEmpty ? cmt.userName[0].toUpperCase() : '?',
+                          style: const TextStyle(color: Colors.white),
+                        ),
+                      ),
+                      title: Text(cmt.userName, style: TextStyle(color: textColor, fontWeight: FontWeight.bold, fontSize: 14)),
+                      subtitle: Text(cmt.content, style: TextStyle(color: textColor.withOpacity(0.8))),
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+          
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _commentController,
+                  style: TextStyle(color: textColor),
+                  decoration: InputDecoration(
+                    hintText: "Nhập bình luận...",
+                    hintStyle: TextStyle(color: textColor.withOpacity(0.5)),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(20)),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                  ),
+                ),
+              ),
+              IconButton(
+                onPressed: () async {
+                  final text = _commentController.text.trim();
+                  if (text.isEmpty) return;
+
+                  _commentController.clear();
+                  final userName = user?.displayName ?? user?.email?.split('@')[0] ?? 'Anonymous';
+
+                  final newComment = Comment(
+                    id: '', 
+                    songId: widget.song.title,
+                    userId: user?.uid ?? 'unknown',
+                    userName: userName,
+                    content: text,
+                    rating: 5.0,
+                    createdAt: DateTime.now(), 
+                  );
+
+                  try {
+                    await _commentRepo.addComment(newComment);
+                  } catch (e) {
+                    debugPrint('Lỗi gửi bình luận: $e');
+                  }
+                },
+                icon: const Icon(Icons.send, color: Colors.blue),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+        ],
+      ),
     );
   }
 }
