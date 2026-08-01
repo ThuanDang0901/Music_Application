@@ -11,6 +11,11 @@ import 'package:flutter_application_1/module/presentation/pages/login_page.dart'
 import 'package:flutter_application_1/module/presentation/widget/mini_player.dart';
 import 'package:flutter_application_1/module/presentation/widget/toast_helper.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_application_1/module/presentation/cubit/search_cubit.dart';
+import 'package:flutter_application_1/module/presentation/pages/search_page.dart';
+import 'package:flutter_application_1/module/domain/usecases/usecase_search_music.dart';
+import 'package:flutter_application_1/module/data/repositories/music_repositories_impl.dart';
+import 'package:flutter_application_1/module/data/services/jamendo_api_service.dart';
 
 class HomeMusic extends StatelessWidget {
   const HomeMusic({super.key});
@@ -339,7 +344,24 @@ class HomeMusic extends StatelessWidget {
                                     );
                                   },
                                 ),
-                                Icon(Icons.search, color: iconColor, size: 28),
+                                 GestureDetector(
+                                   onTap: () {
+                                     Navigator.push(
+                                       context,
+                                       MaterialPageRoute(
+                                         builder: (context) => BlocProvider(
+                                           create: (context) => SearchCubit(
+                                             searchMusicUseCase: SearchMusicUseCase(
+                                               MusicRepositoriesImpl(apiService: JamendoApiService()),
+                                             ),
+                                           ),
+                                           child: const SearchPage(),
+                                         ),
+                                       ),
+                                     );
+                                   },
+                                   child: Icon(Icons.search, color: iconColor, size: 28),
+                                 ),
                               ],
                             ),
                           ),
