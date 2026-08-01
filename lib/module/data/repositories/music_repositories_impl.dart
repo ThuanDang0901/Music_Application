@@ -17,8 +17,7 @@ MusicRepositoriesImpl({required this.apiService});
   }
 @override
   Future<List<Song>> getPlaylistSongs() async {
-    // Thay thế mock data bằng cách gọi API tìm kiếm một thể loại nhạc (vd: 'lofi', 'pop')
-    // Yêu cầu: Bạn cần đảm bảo hàm searchTracks đã được viết trong JamendoApiService
+   
     final List<TrackModel> trackModels = await apiService.searchTracks('lofi', limit: 15);
     
     return trackModels.map((model) => model.toEntity()).toList();

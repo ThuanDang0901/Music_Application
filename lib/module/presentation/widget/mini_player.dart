@@ -109,6 +109,12 @@ class MiniPlayer extends StatelessWidget {
                                       const Icon(Icons.album, size: 40, color: Colors.grey),
                                 )
                               : Image.asset(song.imageUrl, scale: 15),
+                          child:Image.network(
+                            song.imageUrl,
+                            width: 50,
+                            height: 50,
+                            fit: BoxFit.cover,
+                          ),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
