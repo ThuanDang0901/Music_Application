@@ -17,6 +17,7 @@ import 'package:flutter_application_1/module/presentation/pages/search_page.dart
 import 'package:flutter_application_1/module/domain/usecases/usecase_search_music.dart';
 import 'package:flutter_application_1/module/data/repositories/music_repositories_impl.dart';
 import 'package:flutter_application_1/module/data/services/jamendo_api_service.dart';
+import 'package:flutter_application_1/module/presentation/pages/album_detail_page.dart';
 
 class HomeMusic extends StatelessWidget {
   const HomeMusic({super.key});
@@ -70,7 +71,12 @@ class HomeMusic extends StatelessWidget {
     );
 
     if (confirm == true) {
-      context.read<AuthCubit>().signOut();
+      if (context.mounted) {
+        context.read<MusicCubit>().stopMusic();
+      }
+      if (context.mounted) {
+        context.read<AuthCubit>().signOut();
+      }
     }
   }
 
@@ -105,10 +111,13 @@ class HomeMusic extends StatelessWidget {
 
         if (state.status == AuthStatus.unauthenticated &&
             state.action == AuthAction.signOut) {
+          context.read<MusicCubit>().stopMusic();
+
           ToastHelper.showSuccess(
             context: context,
-            message: 'Đã đăng xuất thành công.',
+            message: 'Đăng xuất thành công.',
           );
+
           Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(builder: (_) => const LoginPage()),
@@ -508,7 +517,7 @@ class HomeMusic extends StatelessWidget {
                                 horizontal: 24.0,
                               ),
                               child: Text(
-                                "My Playlist",
+                                "Featured Albums",
                                 style: TextStyle(
                                   color: textColor,
                                   fontSize: 20,
@@ -518,21 +527,16 @@ class HomeMusic extends StatelessWidget {
                             ),
                             SizedBox(height: 20),
                             CarouselSlider.builder(
-                              itemCount: state.playlistSongs.length,
+                              itemCount: state.albums.length,
                               itemBuilder: (context, index, realIndex) {
-                                final song = state.playlistSongs[index];
+                                final album = state.albums[index];
                                 return GestureDetector(
                                   onTap: () {
-                                    context.read<MusicCubit>().playMusic(song);
-
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (context) => DetailMusic(
-                                          playlist: state.playlistSongs,
-                                          initialIndex: index,
-                                          userId: userId,
-                                        ),
+                                        builder: (context) =>
+                                            AlbumDetailPage(album: album),
                                       ),
                                     );
                                   },
@@ -552,7 +556,7 @@ class HomeMusic extends StatelessWidget {
                                             ),
                                             image: DecorationImage(
                                               image: NetworkImage(
-                                                song.imageUrl,
+                                                album.imageUrl,
                                               ),
                                               fit: BoxFit.cover,
                                             ),
@@ -569,7 +573,7 @@ class HomeMusic extends StatelessWidget {
                                         ),
                                         const SizedBox(height: 16),
                                         Text(
-                                          song.title,
+                                          album.name,
                                           style: TextStyle(
                                             color: textColor,
                                             fontSize: 16,
@@ -580,7 +584,7 @@ class HomeMusic extends StatelessWidget {
                                         ),
                                         const SizedBox(height: 4),
                                         Text(
-                                          song.artist,
+                                          album.artistName,
                                           style: TextStyle(
                                             color: textColor,
                                             fontSize: 12,
