@@ -71,7 +71,12 @@ class HomeMusic extends StatelessWidget {
     );
 
     if (confirm == true) {
-      context.read<AuthCubit>().signOut();
+      if (context.mounted) {
+        context.read<MusicCubit>().stopMusic();
+      }
+      if (context.mounted) {
+        context.read<AuthCubit>().signOut();
+      }
     }
   }
 
@@ -106,10 +111,13 @@ class HomeMusic extends StatelessWidget {
 
         if (state.status == AuthStatus.unauthenticated &&
             state.action == AuthAction.signOut) {
+          context.read<MusicCubit>().stopMusic();
+
           ToastHelper.showSuccess(
             context: context,
-            message: 'Đã đăng xuất thành công.',
+            message: 'Đăng xuất thành công.',
           );
+
           Navigator.pushAndRemoveUntil(
             context,
             MaterialPageRoute(builder: (_) => const LoginPage()),
@@ -509,80 +517,86 @@ class HomeMusic extends StatelessWidget {
                                 horizontal: 24.0,
                               ),
                               child: Text(
-                              "Featured Albums",
-                              style: TextStyle(
-                                color: textColor,
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
+                                "Featured Albums",
+                                style: TextStyle(
+                                  color: textColor,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
-                          ),
-                          SizedBox(height: 20),
-                          CarouselSlider.builder(
-                          itemCount: state.albums.length,
-                            itemBuilder: (context, index, realIndex) {
-                              final album = state.albums[index];
-                           return GestureDetector(
-                                onTap: () {
-                                 Navigator.push(
-    context,
-    MaterialPageRoute(
-      builder: (context) => AlbumDetailPage(album: album),
-    ),
-  );
-                                },
-                                child: Container(
-                                  width: 160,
-                                  margin: const EdgeInsets.only(right: 16.0),
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.center,
-                                    children: [
-                                      Container(
-                                        height: 160,
-                                        width: 160,
-                                        decoration: BoxDecoration(
-                                          borderRadius: BorderRadius.circular(16),
-                                          image: DecorationImage(
-                                            image: NetworkImage(album.imageUrl),
-                                            fit: BoxFit.cover,
-                                          ),
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: Colors.black.withValues(
-                                                alpha: 0.3,
-                                              ),
-                                              blurRadius: 10,
-                                              offset: const Offset(0, 5),
+                            SizedBox(height: 20),
+                            CarouselSlider.builder(
+                              itemCount: state.albums.length,
+                              itemBuilder: (context, index, realIndex) {
+                                final album = state.albums[index];
+                                return GestureDetector(
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            AlbumDetailPage(album: album),
+                                      ),
+                                    );
+                                  },
+                                  child: Container(
+                                    width: 160,
+                                    margin: const EdgeInsets.only(right: 16.0),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.center,
+                                      children: [
+                                        Container(
+                                          height: 160,
+                                          width: 160,
+                                          decoration: BoxDecoration(
+                                            borderRadius: BorderRadius.circular(
+                                              16,
                                             ),
-                                          ],
+                                            image: DecorationImage(
+                                              image: NetworkImage(
+                                                album.imageUrl,
+                                              ),
+                                              fit: BoxFit.cover,
+                                            ),
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: Colors.black.withValues(
+                                                  alpha: 0.3,
+                                                ),
+                                                blurRadius: 10,
+                                                offset: const Offset(0, 5),
+                                              ),
+                                            ],
+                                          ),
                                         ),
-                                      ),
-                                      const SizedBox(height: 16),
-                                      Text(
-                                       album.name,
-                                        style: TextStyle(
-                                          color: textColor,
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w500,
+                                        const SizedBox(height: 16),
+                                        Text(
+                                          album.name,
+                                          style: TextStyle(
+                                            color: textColor,
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
                                         ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        album.artistName,
-                                        style: TextStyle(
-                                          color: textColor,
-                                          fontSize: 12,
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          album.artistName,
+                                          style: TextStyle(
+                                            color: textColor,
+                                            fontSize: 12,
+                                          ),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
                                         ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ],
+                                      ],
+                                    ),
                                   ),
-                                ),
-                              );
-                            },
+                                );
+                              },
                               options: CarouselOptions(
                                 height: 240,
                                 viewportFraction: 0.45,
