@@ -194,6 +194,18 @@ class MusicCubit extends Cubit<MusicState> {
     }
   }
 
+   Future<void> setVolume(double value) async {
+    if (state is MusicLoaded) {
+      final currentState = state as MusicLoaded;
+      
+      // Bắn lệnh vào plugin audioplayers để đổi volume
+      await _audioPlayer.setVolume(value);
+      
+      // Emit lại state để cái thanh Slider trên màn hình chạy theo
+      emit(currentState.copyWith(volume: value));
+    }
+  }
+
   @override
   Future<void> close() {
     _audioPlayer.dispose();

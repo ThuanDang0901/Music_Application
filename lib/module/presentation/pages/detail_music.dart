@@ -225,41 +225,56 @@ class _DetailMusicState extends State<DetailMusic> {
                         child: Column(
                           children: [
                             Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                IconButton(
-                                  onPressed: () {},
-                                  icon: Icon(
-                                    Icons.volume_up,
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              // === CỤM 1: ÂM LƯỢNG (Nằm sát nhau bên trái) ===
+                              Row(
+                                children: [
+                                  Icon(
+                                    state.volume == 0 
+                                        ? Icons.volume_off 
+                                        : (state.volume < 0.5 ? Icons.volume_down : Icons.volume_up),
                                     color: subTextColor,
                                   ),
-                                ),
-                                Row(
-                                  children: [
-                                    IconButton(
-                                      onPressed: () {
-                                        context
-                                            .read<MusicCubit>()
-                                            .ControlRepeat();
+                                  SizedBox(
+                                    width: 100, // Khóa cứng chiều dài thanh gạt để không bị dãn
+                                    child: Slider(
+                                      value: state.volume,
+                                      min: 0.0,
+                                      max: 1.0,
+                                      activeColor: sliderActiveColor,
+                                      inactiveColor: sliderInactiveColor,
+                                      onChanged: (value) {
+                                        context.read<MusicCubit>().setVolume(value);
                                       },
-                                      icon: Icon(
-                                        state.isRepeat
-                                            ? Icons.repeat_one
-                                            : Icons.repeat,
-                                        color: subTextColor,
-                                      ),
                                     ),
-                                    IconButton(
-                                      onPressed: () {},
-                                      icon: Icon(
-                                        Icons.shuffle,
-                                        color: subTextColor,
-                                      ),
+                                  ),
+                                ],
+                              ),
+                              
+                              // === CỤM 2: LẶP LẠI & TRỘN BÀI (Nằm bên phải) ===
+                              Row(
+                                children: [
+                                  IconButton(
+                                    onPressed: () {
+                                      context.read<MusicCubit>().ControlRepeat();
+                                    },
+                                    icon: Icon(
+                                      state.isRepeat ? Icons.repeat_one : Icons.repeat,
+                                      color: subTextColor,
                                     ),
-                                  ],
-                                ),
-                              ],
-                            ),
+                                  ),
+                                  IconButton(
+                                    onPressed: () {},
+                                    icon: Icon(
+                                      Icons.shuffle,
+                                      color: subTextColor,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
                             SizedBox(height: 10),
                             Column(
                               children: [
