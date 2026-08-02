@@ -11,6 +11,7 @@ import 'package:flutter_application_1/module/presentation/pages/list_favorite_so
 import 'package:flutter_application_1/module/presentation/pages/login_page.dart';
 import 'package:flutter_application_1/module/presentation/widget/mini_player.dart';
 import 'package:flutter_application_1/module/presentation/widget/toast_helper.dart';
+import 'package:flutter_application_1/module/presentation/pages/album_detail_page.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_application_1/module/presentation/cubit/search_cubit.dart';
 import 'package:flutter_application_1/module/presentation/pages/search_page.dart';
@@ -501,6 +502,49 @@ class HomeMusic extends StatelessWidget {
                                 disableCenter: true,
                               ),
                             ),
+                            child: Text(
+                              "Featured Albums",
+                              style: TextStyle(
+                                color: textColor,
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          SizedBox(height: 20),
+                          CarouselSlider.builder(
+                          itemCount: state.albums.length,
+                            itemBuilder: (context, index, realIndex) {
+                              final album = state.albums[index];
+                           return GestureDetector(
+                                onTap: () {
+                                 Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => AlbumDetailPage(album: album),
+    ),
+  );
+                                },
+                                child: Container(
+                                  width: 160,
+                                  margin: const EdgeInsets.only(right: 16.0),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.center,
+                                    children: [
+                                      Container(
+                                        height: 160,
+                                        width: 160,
+                                        decoration: BoxDecoration(
+                                          borderRadius: BorderRadius.circular(16),
+                                          image: DecorationImage(
+                                            image: NetworkImage(album.imageUrl),
+                                            fit: BoxFit.cover,
+                                          ),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black.withValues(
+                                                alpha: 0.3,
+=======
                             //
                             SizedBox(height: 20),
                             Padding(
@@ -567,6 +611,24 @@ class HomeMusic extends StatelessWidget {
                                             ],
                                           ),
                                         ),
+                                      ),
+                                      const SizedBox(height: 16),
+                                      Text(
+                                       album.name,
+                                        style: TextStyle(
+                                          color: textColor,
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        album.artistName,
+                                        style: TextStyle(
+                                          color: textColor,
+                                          fontSize: 12,
                                         const SizedBox(height: 16),
                                         Text(
                                           song.title,

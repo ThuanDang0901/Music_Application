@@ -1,3 +1,6 @@
+
+import 'package:flutter_application_1/module/data/models/AlbumModel.dart';
+import 'package:flutter_application_1/module/domain/entities/album.dart';
 import 'package:flutter_application_1/module/data/services/favorite_service.dart';
 import 'package:flutter_application_1/module/domain/entities/song.dart';
 import 'package:flutter_application_1/module/domain/repositories/music_repo.dart';
@@ -27,6 +30,16 @@ class MusicRepositoriesImpl implements IMusicRepository {
       limit: 15,
     );
 
+    return trackModels.map((model) => model.toEntity()).toList();
+  }
+  @override
+  Future<List<Album>> getAlbums() async {
+    final List<AlbumModel> albumModels = await apiService.fetchAlbums(limit: 15);
+    return albumModels.map((model) => model.toEntity()).toList();
+  }
+  @override
+  Future<List<Song>> getAlbumSongs(String albumId) async {
+    final List<TrackModel> trackModels = await apiService.fetchTracksByAlbumId(albumId);
     return trackModels.map((model) => model.toEntity()).toList();
   }
 

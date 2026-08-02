@@ -37,6 +37,10 @@ class MiniPlayer extends StatelessWidget {
         );
         return InkWell(
           onTap: () {
+
+           final currentIndex = state.currentQueue.indexOf(
+              state.currentSong!,
+            );
             final userId = context.read<AuthCubit>().state.user?.id;
             List<Song> activePlaylist = state.playlistSongs;
             int currentIndex = activePlaylist.indexOf(state.currentSong!);
@@ -52,6 +56,9 @@ class MiniPlayer extends StatelessWidget {
               context,
               MaterialPageRoute(
                 builder: (context) => DetailMusic(
+
+                  playlist: state.currentQueue,
+                 initialIndex: currentIndex != -1 ? currentIndex : 0,
                   playlist: activePlaylist,
                   initialIndex: currentIndex,
                   userId: userId,
