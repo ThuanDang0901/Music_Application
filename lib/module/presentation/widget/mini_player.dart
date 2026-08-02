@@ -38,23 +38,24 @@ class MiniPlayer extends StatelessWidget {
         return InkWell(
           onTap: () {
             final userId = context.read<AuthCubit>().state.user?.id;
-            List<Song> activePlaylist = state.playlistSongs;
+            
+            // LOGIC MỚI CỰC KỲ ĐƠN GIẢN: Lấy trực tiếp từ currentQueue
+            final activePlaylist = state.currentQueue;
             int currentIndex = activePlaylist.indexOf(state.currentSong!);
+            
+            // Đề phòng trường hợp lỗi không tìm thấy index
             if (currentIndex == -1) {
-              activePlaylist = state.recommendedSongs;
-              currentIndex = activePlaylist.indexOf(state.currentSong!);
-            }
-            if (currentIndex == -1) {
-              activePlaylist = [state.currentSong!];
               currentIndex = 0;
             }
+
             Navigator.push(
               context,
               MaterialPageRoute(
                 builder: (context) => DetailMusic(
-                  playlist: activePlaylist,
+                  // Nếu queue rỗng (hiếm khi xảy ra), truyền tạm bài hát hiện tại vào một list
+                  playlist: activePlaylist.isNotEmpty ? activePlaylist : [state.currentSong!],
                   initialIndex: currentIndex,
-                  userId: userId,
+                  userId: userId, 
                 ),
               ),
             );

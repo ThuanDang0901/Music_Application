@@ -17,6 +17,7 @@ import 'package:flutter_application_1/module/presentation/pages/search_page.dart
 import 'package:flutter_application_1/module/domain/usecases/usecase_search_music.dart';
 import 'package:flutter_application_1/module/data/repositories/music_repositories_impl.dart';
 import 'package:flutter_application_1/module/data/services/jamendo_api_service.dart';
+import 'package:flutter_application_1/module/presentation/pages/album_detail_page.dart';
 
 class HomeMusic extends StatelessWidget {
   const HomeMusic({super.key});
@@ -508,91 +509,80 @@ class HomeMusic extends StatelessWidget {
                                 horizontal: 24.0,
                               ),
                               child: Text(
-                                "My Playlist",
-                                style: TextStyle(
-                                  color: textColor,
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                              "Featured Albums",
+                              style: TextStyle(
+                                color: textColor,
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
-                            SizedBox(height: 20),
-                            CarouselSlider.builder(
-                              itemCount: state.playlistSongs.length,
-                              itemBuilder: (context, index, realIndex) {
-                                final song = state.playlistSongs[index];
-                                return GestureDetector(
-                                  onTap: () {
-                                    context.read<MusicCubit>().playMusic(song);
-
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => DetailMusic(
-                                          playlist: state.playlistSongs,
-                                          initialIndex: index,
-                                          userId: userId,
+                          ),
+                          SizedBox(height: 20),
+                          CarouselSlider.builder(
+                          itemCount: state.albums.length,
+                            itemBuilder: (context, index, realIndex) {
+                              final album = state.albums[index];
+                           return GestureDetector(
+                                onTap: () {
+                                 Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => AlbumDetailPage(album: album),
+    ),
+  );
+                                },
+                                child: Container(
+                                  width: 160,
+                                  margin: const EdgeInsets.only(right: 16.0),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.center,
+                                    children: [
+                                      Container(
+                                        height: 160,
+                                        width: 160,
+                                        decoration: BoxDecoration(
+                                          borderRadius: BorderRadius.circular(16),
+                                          image: DecorationImage(
+                                            image: NetworkImage(album.imageUrl),
+                                            fit: BoxFit.cover,
+                                          ),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: Colors.black.withValues(
+                                                alpha: 0.3,
+                                              ),
+                                              blurRadius: 10,
+                                              offset: const Offset(0, 5),
+                                            ),
+                                          ],
                                         ),
                                       ),
-                                    );
-                                  },
-                                  child: Container(
-                                    width: 160,
-                                    margin: const EdgeInsets.only(right: 16.0),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.center,
-                                      children: [
-                                        Container(
-                                          height: 160,
-                                          width: 160,
-                                          decoration: BoxDecoration(
-                                            borderRadius: BorderRadius.circular(
-                                              16,
-                                            ),
-                                            image: DecorationImage(
-                                              image: NetworkImage(
-                                                song.imageUrl,
-                                              ),
-                                              fit: BoxFit.cover,
-                                            ),
-                                            boxShadow: [
-                                              BoxShadow(
-                                                color: Colors.black.withValues(
-                                                  alpha: 0.3,
-                                                ),
-                                                blurRadius: 10,
-                                                offset: const Offset(0, 5),
-                                              ),
-                                            ],
-                                          ),
+                                      const SizedBox(height: 16),
+                                      Text(
+                                       album.name,
+                                        style: TextStyle(
+                                          color: textColor,
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w500,
                                         ),
-                                        const SizedBox(height: 16),
-                                        Text(
-                                          song.title,
-                                          style: TextStyle(
-                                            color: textColor,
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        album.artistName,
+                                        style: TextStyle(
+                                          color: textColor,
+                                          fontSize: 12,
                                         ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          song.artist,
-                                          style: TextStyle(
-                                            color: textColor,
-                                            fontSize: 12,
-                                          ),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ],
-                                    ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ],
                                   ),
-                                );
-                              },
+                                ),
+                              );
+                            },
                               options: CarouselOptions(
                                 height: 240,
                                 viewportFraction: 0.45,

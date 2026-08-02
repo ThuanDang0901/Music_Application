@@ -1,3 +1,4 @@
+import 'package:flutter_application_1/module/domain/entities/album.dart';
 import 'package:flutter_application_1/module/domain/entities/song.dart';
 
 abstract class MusicState {}
@@ -8,7 +9,9 @@ class MusicLoading extends MusicState {}
 
 class MusicLoaded extends MusicState {
   final List<Song> recommendedSongs;
-  final List<Song> playlistSongs;
+  // final List<Song> playlistSongs;
+  final List<Album>albums;
+  final List<Song> currentQueue;
   // các trường mới cho trình phát nhạc
   final Song? currentSong;
   final bool isPlaying;
@@ -19,7 +22,9 @@ class MusicLoaded extends MusicState {
 
   MusicLoaded({
     required this.recommendedSongs,
-    required this.playlistSongs,
+    // required this.playlistSongs,
+      required this.albums,
+    this.currentQueue = const [],
     this.currentSong,
     this.isPlaying = false,
     this.currentPosition = Duration.zero,
@@ -30,6 +35,8 @@ class MusicLoaded extends MusicState {
   MusicLoaded copyWith({
     List<Song>? recommendedSongs,
     List<Song>? playlistSongs,
+    List<Album>? albums,
+  List<Song>? currentQueue,
     Song? currentSong,
     bool? isPlaying,
     Duration? currentPosition,
@@ -39,7 +46,9 @@ class MusicLoaded extends MusicState {
   }) {
     return MusicLoaded(
       recommendedSongs: recommendedSongs ?? this.recommendedSongs,
-      playlistSongs: playlistSongs ?? this.playlistSongs,
+      // playlistSongs: playlistSongs ?? this.playlistSongs,
+      albums: albums ?? this.albums,
+      currentQueue: currentQueue ?? this.currentQueue,
       currentSong: currentSong ?? this.currentSong,
       isPlaying: isPlaying ?? this.isPlaying,
       currentPosition: currentPosition ?? this.currentPosition,
