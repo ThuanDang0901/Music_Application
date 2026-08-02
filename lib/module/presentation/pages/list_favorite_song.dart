@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_application_1/module/presentation/cubit/auth_cubit.dart';
 import 'package:flutter_application_1/module/presentation/cubit/music_cubit.dart';
 import 'package:flutter_application_1/module/presentation/cubit/music_state.dart';
 import 'package:flutter_application_1/module/presentation/cubit/theme_cubit.dart';
+import 'package:flutter_application_1/module/presentation/pages/detail_music.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class ListFavoriteSong extends StatelessWidget {
@@ -15,6 +17,7 @@ class ListFavoriteSong extends StatelessWidget {
     final textColor = isDark ? Colors.white : Colors.black;
     final subTextColor = isDark ? Colors.white10 : Colors.black38;
     final iconColor = isDark ? Colors.white : Colors.black87;
+    final userId = context.read<AuthCubit>().state.user?.id;
 
     return Scaffold(
       backgroundColor: bgColor,
@@ -64,14 +67,15 @@ class ListFavoriteSong extends StatelessWidget {
                       // ),
 
                       // THAY BẰNG ĐOẠN NÀY:
-child: Image.network(
-  song.imageUrl,
-  width: 60,
-  height: 60,
-  fit: BoxFit.cover,
-  // Thêm errorBuilder để tránh văng app nếu link ảnh từ API bị lỗi
-  errorBuilder: (context, error, stackTrace) => const Icon(Icons.music_note, size: 40), 
-),
+                      child: Image.network(
+                        song.imageUrl,
+                        width: 60,
+                        height: 60,
+                        fit: BoxFit.cover,
+                        // Thêm errorBuilder để tránh văng app nếu link ảnh từ API bị lỗi
+                        errorBuilder: (context, error, stackTrace) =>
+                            const Icon(Icons.music_note, size: 40),
+                      ),
                     ),
                     title: Text(
                       song.title,
@@ -87,12 +91,25 @@ child: Image.network(
                     trailing: IconButton(
                       icon: Icon(Icons.favorite, color: iconColor),
                       onPressed: () {
-                        context.read<MusicCubit>().ControlFavoriteSong(song);
+                        context.read<MusicCubit>().ControlFavoriteSong(
+                          song,
+                          userId: userId,
+                        );
                       },
                     ),
                     onTap: () {
-                      // Bấm vào bài hát thì phát nhạc luôn
+                      // Phát nhạc và chuyển sang màn hình chi tiết bài hát
                       context.read<MusicCubit>().playMusic(song);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => DetailMusic(
+                            playlist: favorites,
+                            initialIndex: index,
+                            userId: userId,
+                          ),
+                        ),
+                      );
                     },
                   );
                 },
