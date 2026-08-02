@@ -1,6 +1,5 @@
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter_application_1/module/domain/entities/album.dart';
 import 'package:flutter_application_1/module/domain/entities/song.dart';
 import 'package:flutter_application_1/module/domain/usecases/usecase_add_favorite_song.dart';
 import 'package:flutter_application_1/module/domain/usecases/usecase_get_music.dart';
@@ -45,55 +44,14 @@ class MusicCubit extends Cubit<MusicState> {
       }
     });
   }
-  Future<List<Song>> getSongsForAlbum(String albumId) async {
-    try {
-      return await getMusicUseCase.executeAlbumSongs(albumId);
-    } catch (e) {
-      debugPrint('Lỗi tải bài hát của album: $e');
-      return []; // Trả về list rỗng nếu lỗi
-    }
-  }
 
-  Future<void> loadMusicData() async {
-   List<Song> recommended = [];
-    List<Song> playlist = [];
-    List<Album> albums = [];
-
-    // 1. Tải danh sách Gợi ý (Recommended) một cách độc lập
   // Tải dữ liệu bài hát cùng với nhạc yêu thích của User
   Future<void> loadMusicData({String? userId}) async {
     emit(MusicLoading());
     try {
-      recommended = await getMusicUseCase.executeRecommendeds();
-    } catch (e) {
-      debugPrint('=== LỖI TẢI RECOMMENDED: $e ===');
-      // Không văng lỗi toàn cục, cứ để list rỗng
-    }
+      final recommended = await getMusicUseCase.executeRecommendeds();
+      final playlist = await getMusicUseCase.executePlaylist();
 
-    // 2. Nghỉ nửa giây (500ms) để server Jamendo không block vì gọi quá nhanh
-    await Future.delayed(const Duration(milliseconds: 500));
-    // 3. Tải danh sách Playlist một cách độc lập
-    try {
-      albums = await getMusicUseCase.executeAlbums();
-    } catch (e) {
-      debugPrint('=== LỖI TẢI PLAYLIST: $e ===');
-      // Không văng lỗi toàn cục, cứ để list rỗng
-    }
-
-    // 4. Kiểm tra kết quả
-    if (recommended.isEmpty && playlist.isEmpty) {
-      // Nếu CẢ HAI đều thất bại, lúc này mới báo lỗi ra màn hình
-      emit(MusicError('Máy chủ đang quá tải hoặc lỗi mạng. Vui lòng thử lại sau!'));
-    } else {
-      // Chỉ cần 1 trong 2 tải thành công, vẫn hiển thị UI cho người dùng
-      emit(MusicLoaded(recommendedSongs: recommended, albums: albums,currentQueue: recommended,));
-    }
-  }
-
- Future<void> playMusic(Song song ,{List<Song>? queue}) async {
-    if (state is MusicLoaded) {
-      
-      final currentState = state as MusicLoaded;
       List<Song> favorites = [];
       if (userId != null && userId.isNotEmpty) {
         favorites = await getUserFavoritesUseCase.execute(userId);
@@ -146,7 +104,7 @@ class MusicCubit extends Cubit<MusicState> {
           : AssetSource(song.audioUrl);
 
       await _audioPlayer.play(source);
-      emit((state as MusicLoaded).copyWith(currentSong: song, isPlaying: true,currentQueue: queue ?? currentState.currentQueue,));
+      emit((state as MusicLoaded).copyWith(currentSong: song, isPlaying: true));
     }
   }
 
@@ -173,8 +131,7 @@ class MusicCubit extends Cubit<MusicState> {
       if (currentState.currentSong == null) return;
 
       final currentUrl = currentState.currentSong!.audioUrl;
-    List<Song> activePlaylist = currentState.currentQueue;
-    if (activePlaylist.isEmpty) return;
+      List<Song> activePlaylist = currentState.playlistSongs;
       int currentIndex = activePlaylist.indexWhere(
         (song) => song.audioUrl == currentUrl,
       );
@@ -202,17 +159,16 @@ class MusicCubit extends Cubit<MusicState> {
 
       final currentUrl = currentState.currentSong!.audioUrl;
 
-     List<Song> activePlaylist = currentState.currentQueue;
-      if (activePlaylist.isEmpty) return;
+      List<Song> activePlaylist = currentState.playlistSongs;
       int currentIndex = activePlaylist.indexWhere(
         (song) => song.audioUrl == currentUrl,
       );
 
       if (currentIndex == -1) {
-      if (currentState.isPlaying && currentState.currentPosition.inSeconds > 3) {
-          await seek(Duration.zero);
-          return;
-        }
+        activePlaylist = currentState.recommendedSongs;
+        currentIndex = activePlaylist.indexWhere(
+          (song) => song.audioUrl == currentUrl,
+        );
       }
 
       if (currentIndex != -1 && activePlaylist.isNotEmpty) {
