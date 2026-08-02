@@ -10,6 +10,7 @@ import 'package:flutter_application_1/module/presentation/pages/list_favorite_so
 import 'package:flutter_application_1/module/presentation/pages/login_page.dart';
 import 'package:flutter_application_1/module/presentation/widget/mini_player.dart';
 import 'package:flutter_application_1/module/presentation/widget/toast_helper.dart';
+import 'package:flutter_application_1/module/presentation/pages/album_detail_page.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class HomeMusic extends StatelessWidget {
@@ -454,7 +455,7 @@ class HomeMusic extends StatelessWidget {
                               horizontal: 24.0,
                             ),
                             child: Text(
-                              "My Playlist",
+                              "Featured Albums",
                               style: TextStyle(
                                 color: textColor,
                                 fontSize: 20,
@@ -464,21 +465,17 @@ class HomeMusic extends StatelessWidget {
                           ),
                           SizedBox(height: 20),
                           CarouselSlider.builder(
-                            itemCount: state.playlistSongs.length,
+                          itemCount: state.albums.length,
                             itemBuilder: (context, index, realIndex) {
-                              final song = state.playlistSongs[index];
+                              final album = state.albums[index];
                            return GestureDetector(
                                 onTap: () {
-                                  context.read<MusicCubit>().playMusic(song);
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => DetailMusic(
-                                        playlist: state.playlistSongs,
-                                        initialIndex: index,
-                                      ),
-                                    ),
-                                  );
+                                 Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => AlbumDetailPage(album: album),
+    ),
+  );
                                 },
                                 child: Container(
                                   width: 160,
@@ -492,7 +489,7 @@ class HomeMusic extends StatelessWidget {
                                         decoration: BoxDecoration(
                                           borderRadius: BorderRadius.circular(16),
                                           image: DecorationImage(
-                                            image: NetworkImage(song.imageUrl),
+                                            image: NetworkImage(album.imageUrl),
                                             fit: BoxFit.cover,
                                           ),
                                           boxShadow: [
@@ -508,7 +505,7 @@ class HomeMusic extends StatelessWidget {
                                       ),
                                       const SizedBox(height: 16),
                                       Text(
-                                        song.title,
+                                       album.name,
                                         style: TextStyle(
                                           color: textColor,
                                           fontSize: 16,
@@ -519,7 +516,7 @@ class HomeMusic extends StatelessWidget {
                                       ),
                                       const SizedBox(height: 4),
                                       Text(
-                                        song.artist,
+                                        album.artistName,
                                         style: TextStyle(
                                           color: textColor,
                                           fontSize: 12,

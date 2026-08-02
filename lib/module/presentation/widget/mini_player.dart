@@ -35,15 +35,15 @@ class MiniPlayer extends StatelessWidget {
         );
         return InkWell(
           onTap: () {
-            final currentIndex = state.playlistSongs.indexOf(
+           final currentIndex = state.currentQueue.indexOf(
               state.currentSong!,
             );
             Navigator.push(
               context,
               MaterialPageRoute(
                 builder: (context) => DetailMusic(
-                  playlist: state.recommendedSongs,
-                  initialIndex: currentIndex != 1 ? currentIndex : 0,
+                  playlist: state.currentQueue,
+                 initialIndex: currentIndex != -1 ? currentIndex : 0,
                 ),
               ),
             );

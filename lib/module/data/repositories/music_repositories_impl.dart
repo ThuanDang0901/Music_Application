@@ -1,3 +1,5 @@
+import 'package:flutter_application_1/module/data/models/AlbumModel.dart';
+import 'package:flutter_application_1/module/domain/entities/album.dart';
 import 'package:flutter_application_1/module/domain/entities/song.dart';
 import 'package:flutter_application_1/module/domain/repositories/music_repo.dart';
 import '../models/track_model.dart';
@@ -20,6 +22,16 @@ MusicRepositoriesImpl({required this.apiService});
    
     final List<TrackModel> trackModels = await apiService.searchTracks('lofi', limit: 15);
     
+    return trackModels.map((model) => model.toEntity()).toList();
+  }
+  @override
+  Future<List<Album>> getAlbums() async {
+    final List<AlbumModel> albumModels = await apiService.fetchAlbums(limit: 15);
+    return albumModels.map((model) => model.toEntity()).toList();
+  }
+  @override
+  Future<List<Song>> getAlbumSongs(String albumId) async {
+    final List<TrackModel> trackModels = await apiService.fetchTracksByAlbumId(albumId);
     return trackModels.map((model) => model.toEntity()).toList();
   }
 
