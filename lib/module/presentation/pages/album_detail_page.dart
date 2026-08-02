@@ -8,6 +8,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 class AlbumDetailPage extends StatelessWidget {
   final Album album;
+  //dsadsadasdas
 
   const AlbumDetailPage({super.key, required this.album});
 
