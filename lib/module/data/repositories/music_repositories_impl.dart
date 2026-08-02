@@ -1,4 +1,5 @@
 import 'package:flutter_application_1/module/data/models/AlbumModel.dart';
+import 'package:flutter_application_1/module/data/services/favorite_service.dart';
 import 'package:flutter_application_1/module/domain/entities/album.dart';
 import 'package:flutter_application_1/module/domain/entities/song.dart';
 import 'package:flutter_application_1/module/domain/repositories/music_repo.dart';
@@ -6,25 +7,32 @@ import '../models/track_model.dart';
 import '../services/jamendo_api_service.dart';
 
 class MusicRepositoriesImpl implements IMusicRepository {
-
   final JamendoApiService apiService;
-MusicRepositoriesImpl({required this.apiService});
-@override
-  Future<List<Song>> getRecommendedSongs() async {
-    
-    final List<TrackModel> trackModels = await apiService.fetchPopularTracks(limit: 10);
-    
-    
-    return trackModels.map((model) => model.toEntity()).toList();
-  }
-@override
-  Future<List<Song>> getPlaylistSongs() async {
-   
-    final List<TrackModel> trackModels = await apiService.searchTracks('lofi', limit: 15);
-    
-    return trackModels.map((model) => model.toEntity()).toList();
-  }
+  final FavoriteService favoriteService;
+  MusicRepositoriesImpl({
+    required this.apiService,
+    required this.favoriteService,
+  });
   @override
+  Future<List<Song>> getRecommendedSongs() async {
+    final List<TrackModel> trackModels = await apiService.fetchPopularTracks(
+      limit: 10,
+    );
+
+    return trackModels.map((model) => model.toEntity()).toList();
+  }
+
+  @override
+  Future<List<Song>> getPlaylistSongs() async {
+    final List<TrackModel> trackModels = await apiService.searchTracks(
+      'lofi',
+      limit: 15,
+    );
+
+    return trackModels.map((model) => model.toEntity()).toList();
+  }
+
+    @override
   Future<List<Album>> getAlbums() async {
     final List<AlbumModel> albumModels = await apiService.fetchAlbums(limit: 15);
     return albumModels.map((model) => model.toEntity()).toList();
@@ -35,7 +43,29 @@ MusicRepositoriesImpl({required this.apiService});
     return trackModels.map((model) => model.toEntity()).toList();
   }
 
+  @override
+  Future<List<Song>> searchSongs(String query) async {
+    final List<TrackModel> trackModels = await apiService.searchTracks(
+      query,
+      limit: 20,
+    );
+    return trackModels.map((model) => model.toEntity()).toList();
+  }
 
+  @override
+  Future<List<Song>> getUserFavorites(String userId) {
+    return favoriteService.getFavorites(userId);
+  }
+
+  @override
+  Future<void> addFavoriteSong(String userId, Song song) {
+    return favoriteService.addFavorite(userId, song);
+  }
+
+  @override
+  Future<void> removeFavoriteSong(String userId, String audioUrl) {
+    return favoriteService.removeFavorite(userId, audioUrl);
+  }
 
   // @override
   // Future<List<Song>> getRecommendedSongs() async {

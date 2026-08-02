@@ -54,7 +54,7 @@ class JamendoApiService {
     }
   }
 
-  Future<List<AlbumModel>> fetchAlbums({int limit = 15}) async {
+   Future<List<AlbumModel>> fetchAlbums({int limit = 15}) async {
     final url = Uri.parse(
         '$baseUrl/albums/?client_id=$clientId&format=json&limit=$limit');
 

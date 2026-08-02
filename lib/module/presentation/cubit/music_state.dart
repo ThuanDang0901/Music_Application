@@ -9,6 +9,7 @@ class MusicLoading extends MusicState {}
 
 class MusicLoaded extends MusicState {
   final List<Song> recommendedSongs;
+  // final List<Song> playlistSongs;
   final List<Album>albums;
   final List<Song> currentQueue;
   // các trường mới cho trình phát nhạc
@@ -21,7 +22,8 @@ class MusicLoaded extends MusicState {
 
   MusicLoaded({
     required this.recommendedSongs,
-    required this.albums,
+    // required this.playlistSongs,
+      required this.albums,
     this.currentQueue = const [],
     this.currentSong,
     this.isPlaying = false,
@@ -32,6 +34,7 @@ class MusicLoaded extends MusicState {
   });
   MusicLoaded copyWith({
     List<Song>? recommendedSongs,
+    List<Song>? playlistSongs,
     List<Album>? albums,
   List<Song>? currentQueue,
     Song? currentSong,
@@ -43,6 +46,7 @@ class MusicLoaded extends MusicState {
   }) {
     return MusicLoaded(
       recommendedSongs: recommendedSongs ?? this.recommendedSongs,
+      // playlistSongs: playlistSongs ?? this.playlistSongs,
       albums: albums ?? this.albums,
       currentQueue: currentQueue ?? this.currentQueue,
       currentSong: currentSong ?? this.currentSong,

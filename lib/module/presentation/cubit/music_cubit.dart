@@ -1,16 +1,27 @@
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter_application_1/module/domain/entities/album.dart';
 import 'package:flutter_application_1/module/domain/entities/song.dart';
+import 'package:flutter_application_1/module/domain/usecases/usecase_add_favorite_song.dart';
+import 'package:flutter_application_1/module/domain/entities/album.dart';
 import 'package:flutter_application_1/module/domain/usecases/usecase_get_music.dart';
+import 'package:flutter_application_1/module/domain/usecases/usecase_get_user_favorites.dart';
+import 'package:flutter_application_1/module/domain/usecases/usecase_remove_favorite_song.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'music_state.dart';
 
 class MusicCubit extends Cubit<MusicState> {
   final GetMusicUseCase getMusicUseCase;
+  final GetUserFavoritesUseCase getUserFavoritesUseCase;
+  final AddFavoriteSongUseCase addFavoriteSongUseCase;
+  final RemoveFavoriteSongUseCase removeFavoriteSongUseCase;
   final AudioPlayer _audioPlayer = AudioPlayer();
 
-  MusicCubit({required this.getMusicUseCase}) : super(MusicInitial()) {
+  MusicCubit({
+    required this.getMusicUseCase,
+    required this.getUserFavoritesUseCase,
+    required this.addFavoriteSongUseCase,
+    required this.removeFavoriteSongUseCase,
+  }) : super(MusicInitial()) {
     _audioPlayer.onPositionChanged.listen((pos) {
       if (state is MusicLoaded) {
         emit((state as MusicLoaded).copyWith(currentPosition: pos));
@@ -34,6 +45,47 @@ class MusicCubit extends Cubit<MusicState> {
       }
     });
   }
+
+  // Tải dữ liệu bài hát cùng với nhạc yêu thích của User
+  Future<void> loadMusicData({String? userId}) async {
+     List<Song> recommended = [];
+    List<Song> playlist = [];
+    List<Album> albums = [];
+     if (recommended.isEmpty && playlist.isEmpty) {
+      // Nếu CẢ HAI đều thất bại, lúc này mới báo lỗi ra màn hình
+      emit(MusicError('Máy chủ đang quá tải hoặc lỗi mạng. Vui lòng thử lại sau!'));
+     }
+    emit(MusicLoading());
+    try {
+      final recommended = await getMusicUseCase.executeRecommendeds();
+       await Future.delayed(const Duration(milliseconds: 500));
+      // final playlist = await getMusicUseCase.executePlaylist();
+
+      List<Song> favorites = [];
+      if (userId != null && userId.isNotEmpty) {
+        favorites = await getUserFavoritesUseCase.execute(userId);
+      }
+       try {
+      albums = await getMusicUseCase.executeAlbums();
+    } catch (e) {
+      debugPrint('=== LỖI TẢI PLAYLIST: $e ===');
+      // Không văng lỗi toàn cục, cứ để list rỗng
+    }
+
+
+      emit(
+        MusicLoaded(
+         recommendedSongs: recommended, 
+         albums: albums,
+         currentQueue: recommended,
+          favoriteSongs: favorites,
+        ),
+      );
+    } catch (e) {
+      debugPrint('=== LỖI LOAD NHẠC: $e ===');
+      emit(MusicError('Lỗi: $e'));
+    }
+  }
   Future<List<Song>> getSongsForAlbum(String albumId) async {
     try {
       return await getMusicUseCase.executeAlbumSongs(albumId);
@@ -43,41 +95,31 @@ class MusicCubit extends Cubit<MusicState> {
     }
   }
 
-  Future<void> loadMusicData() async {
-   List<Song> recommended = [];
-    List<Song> playlist = [];
-    List<Album> albums = [];
+  Future<void> ControlFavoriteSong(Song song, {String? userId}) async {
+    if (state is MusicLoaded) {
+      final currentState = state as MusicLoaded;
+      final List<Song> updatedFavorites = List.from(currentState.favoriteSongs);
+      final isExist = updatedFavorites.any((s) => s.audioUrl == song.audioUrl);
 
-    // 1. Tải danh sách Gợi ý (Recommended) một cách độc lập
-    try {
-      recommended = await getMusicUseCase.executeRecommendeds();
-    } catch (e) {
-      debugPrint('=== LỖI TẢI RECOMMENDED: $e ===');
-      // Không văng lỗi toàn cục, cứ để list rỗng
-    }
+      if (isExist) {
+        updatedFavorites.removeWhere((s) => s.audioUrl == song.audioUrl);
+        emit(currentState.copyWith(favoriteSongs: updatedFavorites));
 
-    // 2. Nghỉ nửa giây (500ms) để server Jamendo không block vì gọi quá nhanh
-    await Future.delayed(const Duration(milliseconds: 500));
+        if (userId != null && userId.isNotEmpty) {
+          await removeFavoriteSongUseCase.execute(userId, song.audioUrl);
+        }
+      } else {
+        updatedFavorites.add(song);
+        emit(currentState.copyWith(favoriteSongs: updatedFavorites));
 
-    // 3. Tải danh sách Playlist một cách độc lập
-    try {
-      albums = await getMusicUseCase.executeAlbums();
-    } catch (e) {
-      debugPrint('=== LỖI TẢI PLAYLIST: $e ===');
-      // Không văng lỗi toàn cục, cứ để list rỗng
-    }
-
-    // 4. Kiểm tra kết quả
-    if (recommended.isEmpty && playlist.isEmpty) {
-      // Nếu CẢ HAI đều thất bại, lúc này mới báo lỗi ra màn hình
-      emit(MusicError('Máy chủ đang quá tải hoặc lỗi mạng. Vui lòng thử lại sau!'));
-    } else {
-      // Chỉ cần 1 trong 2 tải thành công, vẫn hiển thị UI cho người dùng
-      emit(MusicLoaded(recommendedSongs: recommended, albums: albums,currentQueue: recommended,));
+        if (userId != null && userId.isNotEmpty) {
+          await addFavoriteSongUseCase.execute(userId, song);
+        }
+      }
     }
   }
 
- Future<void> playMusic(Song song ,{List<Song>? queue}) async {
+  Future<void> playMusic(Song song ,{List<Song>? queue}) async {
     if (state is MusicLoaded) {
       
       final currentState = state as MusicLoaded;
@@ -92,6 +134,7 @@ class MusicCubit extends Cubit<MusicState> {
       emit((state as MusicLoaded).copyWith(currentSong: song, isPlaying: true,currentQueue: queue ?? currentState.currentQueue,));
     }
   }
+
   Future<void> PauseOrResume() async {
     if (state is MusicLoaded) {
       final currentState = state as MusicLoaded;
@@ -115,7 +158,7 @@ class MusicCubit extends Cubit<MusicState> {
       if (currentState.currentSong == null) return;
 
       final currentUrl = currentState.currentSong!.audioUrl;
-    List<Song> activePlaylist = currentState.currentQueue;
+       List<Song> activePlaylist = currentState.currentQueue;
     if (activePlaylist.isEmpty) return;
       int currentIndex = activePlaylist.indexWhere(
         (song) => song.audioUrl == currentUrl,
@@ -144,17 +187,17 @@ class MusicCubit extends Cubit<MusicState> {
 
       final currentUrl = currentState.currentSong!.audioUrl;
 
-     List<Song> activePlaylist = currentState.currentQueue;
+       List<Song> activePlaylist = currentState.currentQueue;
       if (activePlaylist.isEmpty) return;
       int currentIndex = activePlaylist.indexWhere(
         (song) => song.audioUrl == currentUrl,
       );
 
       if (currentIndex == -1) {
-      if (currentState.isPlaying && currentState.currentPosition.inSeconds > 3) {
-          await seek(Duration.zero);
-          return;
-        }
+        activePlaylist = currentState.recommendedSongs;
+        currentIndex = activePlaylist.indexWhere(
+          (song) => song.audioUrl == currentUrl,
+        );
       }
 
       if (currentIndex != -1 && activePlaylist.isNotEmpty) {
@@ -177,19 +220,6 @@ class MusicCubit extends Cubit<MusicState> {
     if (state is MusicLoaded) {
       final currentState = state as MusicLoaded;
       emit(currentState.copyWith(isRepeat: !currentState.isRepeat));
-    }
-  }
-
-  void ControlFavoriteSong(Song song) {
-    if (state is MusicLoaded) {
-      final currentState = state as MusicLoaded;
-      final List<Song> updatedFavorites = List.from(currentState.favoriteSongs);
-      if (updatedFavorites.contains(song)) {
-        updatedFavorites.remove(song);
-      } else {
-        updatedFavorites.add(song);
-      }
-      emit(currentState.copyWith(favoriteSongs: updatedFavorites));
     }
   }
 

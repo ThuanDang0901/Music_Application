@@ -10,6 +10,7 @@ class GetMusicUseCase
 
   Future<List<Song>> executeRecommendeds() => repository.getRecommendedSongs();
   Future<List<Song>> executePlaylist() => repository.getPlaylistSongs();
-  Future<List<Album>> executeAlbums() => repository.getAlbums();
+    Future<List<Album>> executeAlbums() => repository.getAlbums();
   Future<List<Song>> executeAlbumSongs(String albumId) => repository.getAlbumSongs(albumId);
 }
+
