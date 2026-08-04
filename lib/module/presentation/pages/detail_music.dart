@@ -8,6 +8,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_application_1/module/data/repositories/comment_repo.dart'; 
 import 'package:flutter_application_1/module/domain/entities/comment.dart';
+import 'package:share_plus/share_plus.dart';
 
 class DetailMusic extends StatefulWidget {
   final List<Song> playlist;
@@ -111,6 +112,21 @@ class _DetailMusicState extends State<DetailMusic> {
                                 ),
                               ),
                             ),
+
+                            // 3. NÚT SHARE
+                            IconButton(
+                              onPressed: () {
+                                if (state is MusicLoaded && state.currentSong != null) {
+                                  final song = state.currentSong!;
+                                  // Gọi bảng chia sẻ của điện thoại lên
+                                  Share.share(
+                                    'Đang nghe bài hát "${song.title}" của ${song.artist} cực chill.\n\nNghe thử ngay: ${song.audioUrl}'
+                                  );
+                                }
+                              },
+                              icon: Icon(Icons.share, color: iconColor),
+                            ),
+
                             IconButton(
                             onPressed: () {
                               if (state is MusicLoaded && state.currentSong != null) {
